@@ -51,24 +51,25 @@
 
 ## 界面预览
 
-公开发布时，README 可以搭配以下材料：
+当前仓库已经附带一组真实界面素材：
 
-- 真机截图
-- 短 GIF / 录屏
-- HTML 原型链接
+设置页：
+
+![设置页](./docs/assets/settings-window.png)
+
+录音态：
+
+![录音态](./docs/assets/recording-state.png)
+
+演示动图：
+
+![演示动图](./docs/assets/demo-short.gif)
 
 当前仓库里已有原型：
 
 - [floating-orb 原型](./prototypes/floating-orb/index.html)
 - [ui-states 原型](./prototypes/ui-states/index.html)
 - [界面素材目录说明](./docs/assets/README.md)
-
-后续如果要补 GitHub 展示图，推荐顺序是：
-
-1. 一张设置页截图
-2. 一张录音态截图
-3. 一张思考中截图
-4. 一段 5 到 8 秒的短 GIF
 
 ## 技术栈
 

@@ -32,3 +32,6 @@ codesign/*.mobileprovision
 
 # Local API keys
 dashscope-api-key.txt
+
+# Local capture sources
+素材/
