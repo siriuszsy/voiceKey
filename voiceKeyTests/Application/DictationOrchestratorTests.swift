@@ -87,6 +87,57 @@ final class DictationOrchestratorTests: XCTestCase {
         XCTAssertTrue(textInserter.insertedTexts.isEmpty)
     }
 
+    func testPromotingRecordingIntentToTranslationKeepsRecordingAndIgnoresStaleDictationRelease() async throws {
+        let triggerEngine = FakeTriggerEngine()
+        let recordingEngine = StubRecordingEngine()
+        let asrService = StubASRService()
+        let translationService = StubTranslationService()
+        let cleanupService = StubCleanupService()
+        let contextInspector = StubContextInspector()
+        let textInserter = StubTextInserter()
+        let hudController = SpyHUDController()
+        let logStore = StubSessionLogStore()
+        let settingsStore = StubSettingsStore()
+        let orchestrator = DictationOrchestrator(
+            triggerEngine: triggerEngine,
+            recordingEngine: recordingEngine,
+            asrService: asrService,
+            translationService: translationService,
+            cleanupService: cleanupService,
+            contextInspector: contextInspector,
+            textInserter: textInserter,
+            hudController: hudController,
+            sessionLogStore: logStore,
+            clock: StubClock(),
+            settingsStore: settingsStore
+        )
+
+        triggerEngine.delegate = orchestrator
+        recordingEngine.levelObserver = orchestrator
+        recordingEngine.chunkObserver = orchestrator
+
+        triggerEngine.triggerDown(intent: .dictation, at: 1)
+        triggerEngine.triggerDown(intent: .translation, at: 1.2)
+        triggerEngine.triggerUp(intent: .dictation, at: 1.3)
+        triggerEngine.triggerUp(intent: .translation, at: 2)
+        await fulfillment(of: [processingExpectation {
+            !textInserter.insertedTexts.isEmpty
+        }], timeout: 1)
+
+        XCTAssertEqual(recordingEngine.stopRecordingCallCount, 1)
+        XCTAssertEqual(cleanupService.invocationCount, 0)
+        XCTAssertEqual(translationService.receivedTexts, ["ni hao"])
+        XCTAssertEqual(textInserter.insertedTexts, ["hello"])
+
+        let listeningStates = hudController.renderedStates.compactMap { state -> SessionIntent? in
+            guard case .listening(let intent, _) = state else {
+                return nil
+            }
+            return intent
+        }
+        XCTAssertEqual(listeningStates.suffix(2), [.dictation, .translation])
+    }
+
     private func processingExpectation(_ condition: @escaping @Sendable () -> Bool) -> XCTestExpectation {
         let expectation = expectation(description: "condition satisfied")
         Task {
@@ -142,12 +193,14 @@ private final class StubCleanupService: CleanupService {
 private final class StubRecordingEngine: RecordingEngine {
     weak var levelObserver: RecordingLevelObserving?
     weak var chunkObserver: RecordingChunkObserving?
+    private(set) var stopRecordingCallCount = 0
 
     func prepare() async throws {}
     func startRecording() throws {}
 
     func stopRecording() async throws -> AudioPayload {
-        AudioPayload(
+        stopRecordingCallCount += 1
+        return AudioPayload(
             fileURL: URL(fileURLWithPath: "/tmp/test.wav"),
             format: "wav",
             sampleRate: 16_000,

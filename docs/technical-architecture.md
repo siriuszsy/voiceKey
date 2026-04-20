@@ -75,7 +75,7 @@
 
 ### 2.5 Clean-up
 
-- `qwen3.5-flash`
+- `qwen-flash`
 
 职责：
 
@@ -279,7 +279,7 @@ v1 只保留最小状态：
 
 职责：
 
-- 调用 `qwen3.5-flash`
+- 调用 `qwen-flash`
 - 返回最终插入文本
 
 ### 6.7 `ContextInspector`
@@ -457,6 +457,6 @@ v1 只保留最小状态：
 
 当前最合理的 v1 架构是：
 
-`Swift menubar host + configurable hold-to-talk trigger + AVAudioEngine + qwen3-asr-flash + qwen3.5-flash + AXUIElement insertion`
+`Swift menubar host + configurable hold-to-talk trigger + AVAudioEngine + qwen3-asr-flash + qwen-flash + AXUIElement insertion`
 
 这版已经足够接近 竞品 的核心，不再需要扩设计。

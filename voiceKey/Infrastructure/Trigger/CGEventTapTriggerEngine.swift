@@ -4,15 +4,12 @@ import Foundation
 import OSLog
 
 enum CGEventTapTriggerError: LocalizedError {
-    case inputMonitoringNotTrusted
     case tapCreationFailed
 
     var errorDescription: String? {
         switch self {
-        case .inputMonitoringNotTrusted:
-            return "Input Monitoring permission is required to monitor the trigger key."
         case .tapCreationFailed:
-            return "Failed to create CGEvent tap for trigger key listening."
+            return "触发键监听初始化失败。如果这台机器收不到 Fn 触发，再去系统设置里打开键盘监听。"
         }
     }
 }
@@ -81,10 +78,6 @@ final class CGEventTapTriggerEngine: TriggerEngine, @unchecked Sendable {
     private func startOnMainThread() throws {
         guard !isRunning else {
             return
-        }
-
-        guard CGPreflightListenEventAccess() || CGRequestListenEventAccess() else {
-            throw CGEventTapTriggerError.inputMonitoringNotTrusted
         }
 
         let eventMask = eventMaskForCurrentRegistration()
@@ -246,12 +239,16 @@ final class CGEventTapTriggerEngine: TriggerEngine, @unchecked Sendable {
 
     private func isPressed(event: CGEvent, triggerKey: TriggerKey) -> Bool {
         switch triggerKey {
-        case .commandSemicolon:
+        case .commandSemicolon, .controlCommandSemicolon:
             return false
         case .rightOption:
             return event.flags.contains(.maskAlternate)
         case .fn:
             return event.flags.contains(.maskSecondaryFn)
+        case .fnControl:
+            return event.flags.contains(.maskSecondaryFn) && event.flags.contains(.maskControl)
+        case .fnShift:
+            return event.flags.contains(.maskSecondaryFn) && event.flags.contains(.maskShift)
         }
     }
 

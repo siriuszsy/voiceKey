@@ -10,5 +10,6 @@ if ! command -v xcodegen >/dev/null 2>&1; then
 fi
 
 cd "$ROOT_DIR"
+rm -rf "$ROOT_DIR/voiceKey.xcodeproj"
 xcodegen generate --spec project.yml
 echo "Generated $ROOT_DIR/voiceKey.xcodeproj"

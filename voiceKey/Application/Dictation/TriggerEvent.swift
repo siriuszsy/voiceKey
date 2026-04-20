@@ -13,12 +13,15 @@ enum SessionIntent: String, Codable, Sendable {
         }
     }
 
-    func triggerDisplayName(dictationTriggerKey: TriggerKey) -> String {
+    func triggerDisplayName(
+        dictationTriggerKey: TriggerKey,
+        translationTriggerKey: TriggerKey
+    ) -> String {
         switch self {
         case .dictation:
             return dictationTriggerKey.displayName
         case .translation:
-            return TranslationHotKeyCatalog.primary.displayName
+            return translationTriggerKey.displayName
         }
     }
 }

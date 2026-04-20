@@ -31,13 +31,21 @@ struct MenuContentBuilder {
         insertionProbeItem.action = #selector(ClosureMenuAction.invoke)
         menu.addItem(insertionProbeItem)
 
-        let triggerItem = NSMenuItem(
-            title: "触发键：\(settings.triggerKey.displayName)",
+        let dictationTriggerItem = NSMenuItem(
+            title: "听写触发：\(settings.triggerKey.displayName)",
             action: nil,
             keyEquivalent: ""
         )
-        triggerItem.isEnabled = false
-        menu.addItem(triggerItem)
+        dictationTriggerItem.isEnabled = false
+        menu.addItem(dictationTriggerItem)
+
+        let translationTriggerItem = NSMenuItem(
+            title: "翻译触发：\(settings.translationTriggerKey.displayName)",
+            action: nil,
+            keyEquivalent: ""
+        )
+        translationTriggerItem.isEnabled = false
+        menu.addItem(translationTriggerItem)
 
         let modeItem = NSMenuItem(
             title: "识别模式：\(settings.asrMode.displayName)",

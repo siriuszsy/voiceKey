@@ -1,4 +1,3 @@
-import Carbon
 import XCTest
 @testable import voiceKey
 
@@ -18,27 +17,51 @@ final class JSONSettingsStoreTests: XCTestCase {
 
         XCTAssertEqual(settings.asrMode, .offline)
         XCTAssertEqual(settings.cleanupModel, "qwen-flash")
+        XCTAssertEqual(settings.triggerKey, .fn)
+        XCTAssertEqual(settings.translationTriggerKey, .fnControl)
         XCTAssertEqual(settings.translationSourceLanguage, "auto")
         XCTAssertEqual(settings.translationTargetLanguage, "English")
     }
 
-    func testTranslationShortcutsExposeControlCommandSemicolonHotkey() {
+    func testDefaultSettingsUseFnHotkeys() {
         XCTAssertEqual(
-            TranslationHotKeyCatalog.all,
-            [
-                FixedHotKeyShortcut(
-                    keyCode: 41,
-                    modifiers: UInt32(cmdKey | controlKey),
-                    displayName: "⌃⌘;"
-                )
-            ]
+            AppSettings.default,
+            AppSettings(
+                triggerKey: .fn,
+                translationTriggerKey: .fnControl,
+                microphoneDeviceID: "system-default",
+                asrMode: .offline,
+                cleanupModel: "qwen-flash",
+                cleanupEnabled: true,
+                showHUD: true,
+                fallbackPasteEnabled: true,
+                translationSourceLanguage: "auto",
+                translationTargetLanguage: "English"
+            )
         )
     }
 
-    func testTranslationIntentUsesPrimaryShortcutDisplayName() {
+    func testUnsupportedTranslationTriggerFallsBackToFnControl() throws {
+        let json = """
+        {
+          "triggerKey": "commandSemicolon",
+          "translationTriggerKey": "rightOption"
+        }
+        """.data(using: .utf8)!
+
+        let settings = try JSONDecoder().decode(AppSettings.self, from: json)
+
+        XCTAssertEqual(settings.triggerKey, .fn)
+        XCTAssertEqual(settings.translationTriggerKey, .fnControl)
+    }
+
+    func testTranslationIntentUsesSelectedTriggerDisplayName() {
         XCTAssertEqual(
-            SessionIntent.translation.triggerDisplayName(dictationTriggerKey: .commandSemicolon),
-            TranslationHotKeyCatalog.primary.displayName
+            SessionIntent.translation.triggerDisplayName(
+                dictationTriggerKey: .fn,
+                translationTriggerKey: .fnControl
+            ),
+            TriggerKey.fnControl.displayName
         )
     }
 }

@@ -40,7 +40,7 @@ flowchart LR
     ORC --> CTX[ContextInspector]
     ORC --> HUD[StatusHUDController]
     ORC --> ASR[ASRClient qwen3-asr-flash]
-    ASR --> CLN[CleanupClient qwen3.5-flash]
+    ASR --> CLN[CleanupClient qwen-flash]
     CLN --> INS[InsertionEngine]
     CTX --> INS
     INS --> APP[Focused App Input Field]
@@ -153,7 +153,7 @@ stateDiagram-v2
 
 职责：
 
-- 调用 `qwen3.5-flash`
+- 调用 `qwen-flash`
 - 将 transcript 变成最终插入文本
 
 设计要求：

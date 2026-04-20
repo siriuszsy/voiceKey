@@ -1,5 +1,6 @@
 {
-  "triggerKey": "commandSemicolon",
+  "triggerKey": "fn",
+  "translationTriggerKey": "fnControl",
   "microphoneDeviceID": "system-default",
   "asrMode": "offline",
   "cleanupModel": "qwen-flash",

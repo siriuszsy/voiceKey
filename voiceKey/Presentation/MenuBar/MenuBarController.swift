@@ -25,12 +25,7 @@ final class MenuBarController {
             button.title = BuildInfo.displayName
         }
 
-        let settings = (try? environment.settingsStore.load()) ?? .default
-        statusItem.menu = menuBuilder.buildMenu(
-            settings: settings,
-            settingsTarget: settingsActionTarget,
-            insertionProbeTarget: insertionProbeActionTarget
-        )
+        refreshMenu()
 
         environment.hudController.render(.idle)
     }
@@ -41,7 +36,16 @@ final class MenuBarController {
                 viewModel: SettingsViewModel(
                     settingsStore: environment.settingsStore,
                     apiKeyStore: environment.apiKeyStore,
-                    permissionService: environment.permissionService
+                    permissionService: environment.permissionService,
+                    applySettings: { [weak self, weak environment] settings in
+                        if let triggerEngine = environment?.triggerEngine as? HybridTriggerEngine {
+                            try triggerEngine.updateTriggerConfiguration(
+                                dictationKey: settings.triggerKey,
+                                translationKey: settings.translationTriggerKey
+                            )
+                        }
+                        self?.refreshMenu()
+                    }
                 )
             )
         )
@@ -50,5 +54,14 @@ final class MenuBarController {
         controller.showWindow(nil)
         controller.window?.makeKeyAndOrderFront(nil)
         controller.window?.orderFrontRegardless()
+    }
+
+    private func refreshMenu() {
+        let settings = (try? environment.settingsStore.load()) ?? .default
+        statusItem.menu = menuBuilder.buildMenu(
+            settings: settings,
+            settingsTarget: settingsActionTarget,
+            insertionProbeTarget: insertionProbeActionTarget
+        )
     }
 }

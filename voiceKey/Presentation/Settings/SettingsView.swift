@@ -38,6 +38,11 @@ struct SettingsView: View {
             viewModel.refreshPermissions()
             viewModel.refreshAPIKeyStatus()
         }
+        .onChange(of: viewModel.settings.triggerKey) { _, newValue in
+            if viewModel.settings.translationTriggerKey == newValue {
+                viewModel.settings.translationTriggerKey = viewModel.availableTranslationTriggerKeys.first ?? .fnShift
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             viewModel.refreshPermissions()
             viewModel.refreshAPIKeyStatus()
@@ -58,7 +63,7 @@ struct SettingsView: View {
 
                 Spacer()
 
-                Text("本地调试版")
+                Text("本地直写版")
                     .font(.caption.weight(.semibold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -104,9 +109,14 @@ struct SettingsView: View {
     private var overviewGrid: some View {
         LazyVGrid(columns: overviewColumns, spacing: 12) {
             overviewTile(
-                title: "触发键",
+                title: "听写触发",
                 value: viewModel.triggerKeyDisplayName,
                 caption: "当前用于唤起录音的全局快捷键。"
+            )
+            overviewTile(
+                title: "翻译触发",
+                value: viewModel.translationTriggerKeyDisplayName,
+                caption: "当前用于翻译模式的触发键。"
             )
             overviewTile(
                 title: "输入设备",
@@ -119,9 +129,9 @@ struct SettingsView: View {
                 caption: "关闭后会直接输出原始转写结果。"
             )
             overviewTile(
-                title: "写回回退",
-                value: viewModel.settings.fallbackPasteEnabled ? "允许" : "关闭",
-                caption: "辅助功能写入失败时，是否回退到粘贴。"
+                title: "结果输出",
+                value: "自适应输出",
+                caption: "有辅助功能时优先直写；没授权时自动回退到剪贴板。"
             )
         }
     }
@@ -129,11 +139,11 @@ struct SettingsView: View {
     private var permissionsCard: some View {
         settingsCard(
             title: "必要权限",
-            subtitle: "音键最核心的是录音和写回。权限只保留这两条主链，以及未来才会用到的键盘监听。"
+            subtitle: "麦克风决定能不能录，辅助功能决定是直接落字还是先回退到剪贴板。Fn 热键默认直接尝试注册。"
         ) {
             permissionRow(
                 title: "辅助功能",
-                subtitle: "决定文字能不能写回到当前输入框。这是最关键的系统权限。",
+                subtitle: "授权后会优先直接写回当前输入框；没授权时仍可回退到剪贴板。",
                 state: viewModel.accessibilityState,
                 primaryButtonTitle: "请求授权",
                 primaryAction: viewModel.requestAccessibility,
@@ -151,21 +161,8 @@ struct SettingsView: View {
                 secondaryAction: viewModel.openMicrophoneSettings
             )
 
-            if viewModel.showsInputMonitoringSetup {
-                permissionRow(
-                    title: "键盘监听",
-                    subtitle: "只有切到需要系统键盘监听的触发键时才重要。",
-                    state: viewModel.inputMonitoringState,
-                    primaryButtonTitle: "打开系统设置",
-                    primaryAction: viewModel.requestInputMonitoring,
-                    secondaryButtonTitle: "刷新状态",
-                    secondaryAction: viewModel.refreshPermissions
-                )
-            } else {
-                inlineNote("当前触发键不依赖键盘监听。后续如果切回右侧 Option 或 Fn，再处理这一项。")
-            }
-
             inlineNote(viewModel.permissionHintText)
+            inlineNote("如果你的机器上 `Fn` 热键始终收不到，再去“系统设置 > 隐私与安全性 > 键盘监听”里手动打开。")
 
             if let setupMessage = viewModel.setupMessage {
                 inlineNote(setupMessage)
@@ -234,7 +231,7 @@ struct SettingsView: View {
                 TextField("目标语言，默认 English", text: $viewModel.settings.translationTargetLanguage)
                     .textFieldStyle(.roundedBorder)
 
-                inlineNote("翻译快捷键默认使用 \(TranslationHotKeyCatalog.primary.displayName)。它和听写走同一套全局热键机制，但不共享键位，避免被 `⌘ + ;` 抢走。源语言可填 auto，目标语言建议填写 English、Chinese、Japanese 或对应语言代码。")
+                inlineNote("当前翻译触发键是 \(viewModel.translationTriggerKeyDisplayName)。默认方案是 `Fn` 听写，`Fn + Control` 翻译，`Fn + Shift` 留作备选。源语言可填 auto，目标语言建议填写 English、Chinese、Japanese 或对应语言代码。")
             }
             .padding(16)
             .background(cardFill, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -246,10 +243,18 @@ struct SettingsView: View {
             title: "界面与写回",
             subtitle: "尽量少开关，只保留会明显改变主观体验的行为。"
         ) {
-            detailRow(
-                title: "触发键",
-                subtitle: "当前开发版继续使用组合热键，避免把权限复杂度带回主链。",
-                value: viewModel.triggerKeyDisplayName
+            triggerPickerRow(
+                title: "听写触发",
+                subtitle: "默认建议用 `Fn`。如果你想把主键位留给翻译，也可以切到 `Fn + Shift` 或 `Fn + Control`。",
+                selection: $viewModel.settings.triggerKey,
+                choices: TriggerKey.dictationChoices
+            )
+
+            triggerPickerRow(
+                title: "翻译触发",
+                subtitle: "默认建议用 `Fn + Control`。系统会自动避免和听写键冲突，剩下的 `Fn + Shift` 可作备选。",
+                selection: $viewModel.settings.translationTriggerKey,
+                choices: viewModel.availableTranslationTriggerKeys
             )
 
             detailRow(
@@ -266,7 +271,7 @@ struct SettingsView: View {
 
             toggleRow(
                 title: "启用粘贴回退",
-                subtitle: "辅助功能直写失败时，允许复制到剪贴板并尝试粘贴。",
+                subtitle: "有辅助功能时，直写失败后允许尝试粘贴回退；没辅助功能时仍会先复制到剪贴板。",
                 isOn: $viewModel.settings.fallbackPasteEnabled
             )
         }
@@ -294,6 +299,29 @@ struct SettingsView: View {
             if let saveMessage = viewModel.saveMessage {
                 inlineNote(saveMessage)
             }
+        }
+    }
+
+    private func triggerPickerRow(
+        title: String,
+        subtitle: String,
+        selection: Binding<TriggerKey>,
+        choices: [TriggerKey]
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.body.weight(.semibold))
+
+            Picker(title, selection: selection) {
+                ForEach(choices, id: \.self) { key in
+                    Text(key.displayName)
+                        .tag(key)
+                }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+
+            inlineNote(subtitle)
         }
     }
 

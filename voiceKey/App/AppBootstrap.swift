@@ -5,12 +5,9 @@ final class AppBootstrap {
     func buildEnvironment() throws -> AppEnvironment {
         let paths = FileSystemPaths(appName: BuildInfo.storageName)
         let settingsStore = JSONSettingsStore(paths: paths)
-        var settings = (try? settingsStore.load()) ?? .default
-        if settings.triggerKey.requiresInputMonitoring {
-            settings.triggerKey = .commandSemicolon
-            try? settingsStore.save(settings)
-        }
-        if !settings.cleanupEnabled {
+        let loadedSettings = (try? settingsStore.load()) ?? .default
+        var settings = sanitizedSettings(loadedSettings)
+        if settings != loadedSettings || !settings.cleanupEnabled {
             settings.cleanupEnabled = true
             try? settingsStore.save(settings)
         }
@@ -21,17 +18,31 @@ final class AppBootstrap {
         let permissionService = SystemPermissionService()
         let sessionLogStore = JSONLSessionLogStore(paths: paths)
         let httpClient = URLSessionHTTPClient()
-        let triggerEngine = HybridTriggerEngine(initialKey: settings.triggerKey)
+        let triggerEngine = HybridTriggerEngine(
+            initialDictationKey: settings.triggerKey,
+            initialTranslationKey: settings.translationTriggerKey
+        )
         let audioPrewarmer = AudioSessionPrewarmer()
         let recordingEngine = AVAudioRecordingEngine(
             prewarmer: audioPrewarmer,
             fileWriter: TemporaryAudioFileWriter(paths: paths)
         )
-        let contextInspector = AXContextInspector(appResolver: FrontmostAppResolver())
-        let textInserter = CompositeTextInserter(
-            primary: AXTextInserter(),
-            fallback: PasteboardFallbackInserter(executor: SyntheticPasteExecutor())
+        let contextInspector: ContextInspector
+        let textInserter: TextInserter
+#if DEBUG
+        contextInspector = AXContextInspector(appResolver: FrontmostAppResolver())
+        textInserter = AccessibilityAwareTextInserter(
+            permissionService: permissionService,
+            accessibilityEnabledInserter: CompositeTextInserter(
+                primary: AXTextInserter(),
+                fallback: PasteboardFallbackInserter(executor: SyntheticPasteExecutor())
+            ),
+            accessibilityDisabledInserter: ClipboardTextInserter()
         )
+#else
+        contextInspector = FrontmostContextInspector(appResolver: FrontmostAppResolver())
+        textInserter = ClipboardTextInserter()
+#endif
         let promptBuilder = CleanupPromptBuilder()
         let offlineASRService = AliyunASRService(httpClient: httpClient, apiKeyStore: apiKeyStore)
         let realtimeASRService = AliyunRealtimeASRService(apiKeyStore: apiKeyStore)
@@ -102,6 +113,17 @@ final class AppBootstrap {
             runtimePreviewCoordinator: runtimePreviewCoordinator,
             fixedTextInsertionProbe: fixedTextInsertionProbe
         )
+    }
+
+    private func sanitizedSettings(_ settings: AppSettings) -> AppSettings {
+        guard settings.triggerKey == settings.translationTriggerKey else {
+            return settings
+        }
+
+        var sanitized = settings
+        sanitized.translationTriggerKey =
+            TriggerKey.translationChoices.first(where: { $0 != settings.triggerKey }) ?? .fnControl
+        return sanitized
     }
 }
 

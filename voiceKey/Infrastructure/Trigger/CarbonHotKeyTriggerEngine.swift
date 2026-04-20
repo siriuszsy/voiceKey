@@ -162,7 +162,9 @@ final class CarbonHotKeyTriggerEngine: TriggerEngine, @unchecked Sendable {
             switch triggerKey {
             case .commandSemicolon:
                 return (keyCode: 41, modifiers: UInt32(cmdKey))
-            case .rightOption, .fn:
+            case .controlCommandSemicolon:
+                return (keyCode: 41, modifiers: UInt32(cmdKey | controlKey))
+            case .rightOption, .fn, .fnControl, .fnShift:
                 throw CarbonHotKeyTriggerError.unsupportedTriggerKey
             }
         case .fixedHotKey(let hotKey):

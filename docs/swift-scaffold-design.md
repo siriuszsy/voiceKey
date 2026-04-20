@@ -551,7 +551,7 @@ final class AliyunASRService: ASRService {
 
 职责：
 
-- 调 `qwen3.5-flash`
+- 调 `qwen-flash`
 - 用保守 prompt 清理文本
 - 丢弃 reasoning 内容
 

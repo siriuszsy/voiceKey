@@ -127,7 +127,7 @@
 
 含义：
 
-- 正在调用 `qwen3.5-flash`
+- 正在调用 `qwen-flash`
 
 ### 4.4 `insertingText`
 

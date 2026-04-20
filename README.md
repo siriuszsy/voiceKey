@@ -10,30 +10,36 @@
 
 `按住说话 -> 松开 -> 语音转文字 -> 文本整理 -> 自动写回当前光标`
 
-当前仓库采用 `源码公开、文档公开、不提供二进制安装包` 的发布方式。  
-也就是说，GitHub 上会提供：
+从 `1.0` 开始，这个仓库同时提供：
 
 - 源码
+- GitHub Releases 里的 macOS 编译产物
 - 设计文档
 - 架构说明
 - 编译与权限说明
+- 用户使用手册
 
 不会提供：
 
-- 可直接安装的 `.app` 二进制
 - 本地签名证书或私钥
 - API Key
 
-## 当前功能
+快速入口：
+
+- [GitHub Releases](https://github.com/siriuszsy/yinjian-macos/releases)
+- [用户使用手册](./docs/user-guide.md)
+- [源码发布说明](./docs/source-release-guide.md)
+
+## 1.0 功能
 
 - 全局触发录音与翻译
-  当前开发版默认使用 `⌘ + ;` 做听写，`⌃⌘;` 做翻译
+  当前开发版默认使用 `Fn` 做听写，`Fn + Control` 做翻译，`Fn + Shift` 作为备选
 - 底部悬浮输入状态
   录音时显示波形，处理中显示 `思考中`
 - 语音转文本
   使用阿里云百炼 `qwen3-asr-flash`
 - 文本整理
-  使用阿里云百炼 `qwen3.5-flash`
+  默认使用阿里云百炼 `qwen-flash`
 - 翻译模式
   录音后直接输出目标语言，不再经过 cleanup
 - 自动写回当前输入框
@@ -85,25 +91,26 @@
 - `AVAudioRecorder`
 - `AXUIElement`
 - `qwen3-asr-flash`
-- `qwen3.5-flash`
+- `qwen-flash`
 - `Keychain / 本地文件存储`
 
 当前主链路：
 
 ```text
-⌘ + ; -> 录音 -> qwen3-asr-flash -> qwen3.5-flash -> 写回当前光标
+Fn -> 录音 -> qwen3-asr-flash -> qwen-flash -> 写回当前光标
 ```
 
 翻译链路：
 
 ```text
-⌃⌘; -> 录音 -> qwen3-asr-flash -> 翻译 -> 写回当前光标
+Fn + Control -> 录音 -> qwen3-asr-flash -> 翻译 -> 写回当前光标
 ```
 
 ## 如何从源码编译
 
 详细步骤见：
 
+- [用户使用手册](./docs/user-guide.md)
 - [源码发布说明](./docs/source-release-guide.md)
 - [Vibe Coding 开发说明](./docs/vibe-coding-guide.md)
 
@@ -145,11 +152,11 @@ xcodebuild -project voiceKey.xcodeproj \
 - 麦克风
   录音必需
 - 辅助功能
-  写回当前输入框必需
+  授权后优先直写当前输入框
 - 键盘监听
-  只有未来切回 `Fn` / 右侧 `⌥` 这类单键触发时才需要
+  当前默认不会主动要求；只有个别机器收不到 `Fn` 时，才需要手动打开
 
-当前开发版默认触发键是 `⌘ + ;` 和 `⌃⌘;`，都不依赖键盘监听权限。  
+当前开发版默认触发键是 `Fn` 和 `Fn + Control`，会先直接尝试注册。  
 如果你怀疑是辅助功能没有真正生效，先从菜单栏点一次 `写入测试文本`，不要直接走整条语音链路。
 
 ## 架构
@@ -187,7 +194,6 @@ voiceKey/
 
 - 本地百炼 API Key
 - 本地签名证书与私钥
-- 本地构建产物
 - 本地 `DerivedData` / `.derived`
 
 如果你要在自己的机器上做本地签名，仓库中会保留脚本，但不会保留：

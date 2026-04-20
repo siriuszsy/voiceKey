@@ -8,112 +8,122 @@ struct FixedHotKeyShortcut: Sendable, Equatable {
     let displayName: String
 }
 
-enum TranslationHotKeyCatalog {
-    static let primary = FixedHotKeyShortcut(
-        keyCode: 41,
-        modifiers: UInt32(cmdKey | controlKey),
-        displayName: "⌃⌘;"
-    )
-
-    static let all = [primary]
-}
-
 final class HybridTriggerEngine: TriggerEngine, @unchecked Sendable {
     private let logger = Logger(subsystem: BuildInfo.bundleIdentifier, category: "Trigger")
 
     weak var delegate: TriggerEngineDelegate? {
         didSet {
             dictationCarbonEngine.delegate = delegate
-            cgEventTapEngine.delegate = delegate
-            translationCarbonEngines.forEach { $0.delegate = delegate }
+            translationCarbonEngine.delegate = delegate
+            modifierChordEngine.delegate = delegate
         }
     }
 
     private var triggerKey: TriggerKey
+    private var translationTriggerKey: TriggerKey
     private var isRunning = false
     private let dictationCarbonEngine: CarbonHotKeyTriggerEngine
-    private let cgEventTapEngine: CGEventTapTriggerEngine
-    private let translationCarbonEngines: [CarbonHotKeyTriggerEngine]
+    private let translationCarbonEngine: CarbonHotKeyTriggerEngine
+    private let modifierChordEngine: ModifierChordTriggerEngine
 
-    init(initialKey: TriggerKey) {
-        self.triggerKey = initialKey
-        self.dictationCarbonEngine = CarbonHotKeyTriggerEngine(initialKey: initialKey, hotKeyIDValue: 1)
-        self.cgEventTapEngine = CGEventTapTriggerEngine(initialKey: initialKey)
-        self.translationCarbonEngines = TranslationHotKeyCatalog.all.enumerated().map { index, hotKey in
-            CarbonHotKeyTriggerEngine(
-                fixedHotKey: hotKey,
-                intent: .translation,
-                hotKeyIDValue: UInt32(100 + index)
-            )
-        }
+    init(initialDictationKey: TriggerKey, initialTranslationKey: TriggerKey) {
+        self.triggerKey = initialDictationKey
+        self.translationTriggerKey = initialTranslationKey
+        self.dictationCarbonEngine = CarbonHotKeyTriggerEngine(
+            initialKey: initialDictationKey,
+            intent: .dictation,
+            hotKeyIDValue: 1
+        )
+        self.translationCarbonEngine = CarbonHotKeyTriggerEngine(
+            initialKey: initialTranslationKey,
+            intent: .translation,
+            hotKeyIDValue: 2
+        )
+        self.modifierChordEngine = ModifierChordTriggerEngine(
+            dictationTrigger: initialDictationKey.requiresInputMonitoring ? initialDictationKey : nil,
+            translationTrigger: initialTranslationKey.requiresInputMonitoring ? initialTranslationKey : nil
+        )
     }
 
     func start() throws {
         do {
-            try startTranslationHotKeys()
-            try activeEngine.start()
+            try startCarbonTriggerIfNeeded(dictationCarbonEngine, key: triggerKey, scope: "dictation")
+            try startCarbonTriggerIfNeeded(translationCarbonEngine, key: translationTriggerKey, scope: "translation")
+            try startModifierTriggersIfNeeded()
+            isRunning = true
         } catch {
-            stopTranslationHotKeys()
+            stop()
             throw error
         }
-        isRunning = true
     }
 
     func stop() {
-        activeEngine.stop()
-        stopTranslationHotKeys()
+        dictationCarbonEngine.stop()
+        translationCarbonEngine.stop()
+        modifierChordEngine.stop()
         isRunning = false
     }
 
     func updateTriggerKey(_ key: TriggerKey) throws {
+        try updateTriggerConfiguration(dictationKey: key, translationKey: translationTriggerKey)
+    }
+
+    func updateTriggerConfiguration(dictationKey: TriggerKey, translationKey: TriggerKey) throws {
+        let previousDictationKey = triggerKey
+        let previousTranslationKey = translationTriggerKey
         let wasRunning = isRunning
         if wasRunning {
-            activeEngine.stop()
+            stop()
         }
 
-        triggerKey = key
-        try dictationCarbonEngine.updateTriggerKey(key)
-        try cgEventTapEngine.updateTriggerKey(key)
+        do {
+            triggerKey = dictationKey
+            translationTriggerKey = translationKey
+            try dictationCarbonEngine.updateTriggerKey(dictationKey)
+            try translationCarbonEngine.updateTriggerKey(translationKey)
+            try modifierChordEngine.updateBindings(
+                dictationTrigger: dictationKey.requiresInputMonitoring ? dictationKey : nil,
+                translationTrigger: translationKey.requiresInputMonitoring ? translationKey : nil
+            )
 
-        if wasRunning {
-            try activeEngine.start()
-        }
-    }
-
-    private var activeEngine: TriggerEngine {
-        switch triggerKey {
-        case .commandSemicolon:
-            return dictationCarbonEngine
-        case .rightOption, .fn:
-            return cgEventTapEngine
-        }
-    }
-
-    private func startTranslationHotKeys() throws {
-        var registeredShortcuts: [String] = []
-        var failedShortcuts: [String] = []
-
-        for (engine, shortcut) in zip(translationCarbonEngines, TranslationHotKeyCatalog.all) {
-            do {
-                try engine.start()
-                registeredShortcuts.append(shortcut.displayName)
-                logger.notice("Registered translation hotkey: \(shortcut.displayName, privacy: .public)")
-            } catch {
-                failedShortcuts.append("\(shortcut.displayName): \(error.localizedDescription)")
-                logger.error("Failed to register translation hotkey \(shortcut.displayName, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            if wasRunning {
+                try start()
             }
-        }
-
-        if registeredShortcuts.isEmpty {
-            logger.error("No translation hotkeys registered. Translation trigger is unavailable in this run.")
-        } else if !failedShortcuts.isEmpty {
-            let registeredSummary = registeredShortcuts.joined(separator: ", ")
-            let failedSummary = failedShortcuts.joined(separator: " | ")
-            logger.warning("Translation hotkeys partially available. Registered: \(registeredSummary, privacy: .public). Failed: \(failedSummary, privacy: .public)")
+        } catch {
+            triggerKey = previousDictationKey
+            translationTriggerKey = previousTranslationKey
+            try? dictationCarbonEngine.updateTriggerKey(previousDictationKey)
+            try? translationCarbonEngine.updateTriggerKey(previousTranslationKey)
+            try? modifierChordEngine.updateBindings(
+                dictationTrigger: previousDictationKey.requiresInputMonitoring ? previousDictationKey : nil,
+                translationTrigger: previousTranslationKey.requiresInputMonitoring ? previousTranslationKey : nil
+            )
+            if wasRunning {
+                try? start()
+            }
+            throw error
         }
     }
 
-    private func stopTranslationHotKeys() {
-        translationCarbonEngines.forEach { $0.stop() }
+    private func startCarbonTriggerIfNeeded(
+        _ engine: CarbonHotKeyTriggerEngine,
+        key: TriggerKey,
+        scope: String
+    ) throws {
+        guard key.isCarbonCompatible else {
+            return
+        }
+
+        try engine.start()
+        logger.notice("Registered \(scope, privacy: .public) hotkey: \(key.displayName, privacy: .public)")
+    }
+
+    private func startModifierTriggersIfNeeded() throws {
+        guard modifierChordEngine.hasBindings else {
+            return
+        }
+
+        try modifierChordEngine.start()
+        logger.notice("Registered modifier trigger engine. Dictation: \(self.triggerKey.displayName, privacy: .public), translation: \(self.translationTriggerKey.displayName, privacy: .public)")
     }
 }

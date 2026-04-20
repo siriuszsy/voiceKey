@@ -8,8 +8,13 @@ struct FileSystemPaths {
     let temporaryDirectory: URL
 
     init(appName: String) {
-        let baseDirectory = FileManager.default.homeDirectoryForCurrentUser
+        let applicationSupportDirectory = FileManager.default.urls(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask
+        ).first ?? FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support", isDirectory: true)
+
+        let baseDirectory = applicationSupportDirectory
             .appendingPathComponent(appName, isDirectory: true)
 
         rootDirectory = baseDirectory

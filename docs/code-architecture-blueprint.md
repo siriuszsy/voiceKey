@@ -589,7 +589,7 @@ struct SessionRecord: Codable {
 
 职责：
 
-- 调用 `qwen3.5-flash`
+- 调用 `qwen-flash`
 - 丢弃 reasoning 相关字段
 - 返回最终文本
 

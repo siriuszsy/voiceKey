@@ -3,7 +3,7 @@ import Foundation
 struct DictationSessionContext: Sendable {
     let id: UUID
     let startedAt: Date
-    let intent: SessionIntent
+    var intent: SessionIntent
     var triggerReleasedAt: Date?
     var focusedContext: FocusedContext?
     var audioPayload: AudioPayload?

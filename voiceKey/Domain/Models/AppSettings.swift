@@ -23,8 +23,9 @@ enum ASRMode: String, Codable, CaseIterable, Sendable {
     }
 }
 
-struct AppSettings: Codable, Sendable {
+struct AppSettings: Codable, Sendable, Equatable {
     var triggerKey: TriggerKey
+    var translationTriggerKey: TriggerKey
     var microphoneDeviceID: String
     var asrMode: ASRMode
     var cleanupModel: String
@@ -36,6 +37,7 @@ struct AppSettings: Codable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case triggerKey
+        case translationTriggerKey
         case microphoneDeviceID
         case asrMode
         case cleanupModel
@@ -48,6 +50,7 @@ struct AppSettings: Codable, Sendable {
 
     init(
         triggerKey: TriggerKey,
+        translationTriggerKey: TriggerKey,
         microphoneDeviceID: String,
         asrMode: ASRMode,
         cleanupModel: String,
@@ -57,7 +60,8 @@ struct AppSettings: Codable, Sendable {
         translationSourceLanguage: String,
         translationTargetLanguage: String
     ) {
-        self.triggerKey = triggerKey
+        self.triggerKey = AppSettings.normalizedTriggerKey(triggerKey)
+        self.translationTriggerKey = AppSettings.normalizedTranslationTriggerKey(translationTriggerKey)
         self.microphoneDeviceID = microphoneDeviceID
         self.asrMode = asrMode
         self.cleanupModel = AppSettings.normalizedCleanupModel(cleanupModel)
@@ -70,7 +74,12 @@ struct AppSettings: Codable, Sendable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        triggerKey = try container.decodeIfPresent(TriggerKey.self, forKey: .triggerKey) ?? .commandSemicolon
+        triggerKey = AppSettings.normalizedTriggerKey(
+            try container.decodeIfPresent(TriggerKey.self, forKey: .triggerKey)
+        )
+        translationTriggerKey = AppSettings.normalizedTranslationTriggerKey(
+            try container.decodeIfPresent(TriggerKey.self, forKey: .translationTriggerKey)
+        )
         microphoneDeviceID = try container.decodeIfPresent(String.self, forKey: .microphoneDeviceID) ?? "system-default"
         asrMode = try container.decodeIfPresent(ASRMode.self, forKey: .asrMode) ?? .offline
         cleanupModel = AppSettings.normalizedCleanupModel(
@@ -85,6 +94,18 @@ struct AppSettings: Codable, Sendable {
         translationTargetLanguage = AppSettings.normalizedTranslationTargetLanguage(
             try container.decodeIfPresent(String.self, forKey: .translationTargetLanguage)
         )
+    }
+
+    var usesInputMonitoringTrigger: Bool {
+        triggerKey.requiresInputMonitoring || translationTriggerKey.requiresInputMonitoring
+    }
+
+    private static func normalizedTriggerKey(_ value: TriggerKey?) -> TriggerKey {
+        guard let value, TriggerKey.dictationChoices.contains(value) else {
+            return .fn
+        }
+
+        return value
     }
 
     private static func normalizedCleanupModel(_ value: String?) -> String {
@@ -106,8 +127,17 @@ struct AppSettings: Codable, Sendable {
         return trimmed.caseInsensitiveCompare("auto") == .orderedSame ? "English" : trimmed
     }
 
+    private static func normalizedTranslationTriggerKey(_ value: TriggerKey?) -> TriggerKey {
+        guard let value, TriggerKey.translationChoices.contains(value) else {
+            return .fnControl
+        }
+
+        return value
+    }
+
     static let `default` = AppSettings(
-        triggerKey: .commandSemicolon,
+        triggerKey: .fn,
+        translationTriggerKey: .fnControl,
         microphoneDeviceID: "system-default",
         asrMode: .offline,
         cleanupModel: "qwen-flash",

@@ -94,6 +94,12 @@ final class DictationOrchestrator: TriggerEngineDelegate, RecordingLevelObservin
     }
 
     private func handleTriggerDown(for intent: SessionIntent, at date: Date) {
+        if case .recording = state,
+           sessionContext?.intent != intent {
+            upgradeRecordingIntent(to: intent)
+            return
+        }
+
         guard case .idle = state else {
             return
         }
@@ -107,8 +113,16 @@ final class DictationOrchestrator: TriggerEngineDelegate, RecordingLevelObservin
         }
         metricsTracker = DictationMetricsTracker()
         metricsTracker.markRecordingStarted(at: date)
-        let triggerKey = (try? settingsStore.load().triggerKey) ?? .commandSemicolon
-        hudController.render(.listening(intent: intent, triggerLabel: intent.triggerDisplayName(dictationTriggerKey: triggerKey)))
+        let settings = (try? settingsStore.load()) ?? .default
+        hudController.render(
+            .listening(
+                intent: intent,
+                triggerLabel: intent.triggerDisplayName(
+                    dictationTriggerKey: settings.triggerKey,
+                    translationTriggerKey: settings.translationTriggerKey
+                )
+            )
+        )
 
         do {
             try recordingEngine.startRecording()
@@ -116,6 +130,28 @@ final class DictationOrchestrator: TriggerEngineDelegate, RecordingLevelObservin
         } catch {
             fail(error)
         }
+    }
+
+    private func upgradeRecordingIntent(to intent: SessionIntent) {
+        guard case .recording = state else {
+            return
+        }
+
+        guard sessionContext?.intent != intent else {
+            return
+        }
+
+        sessionContext?.intent = intent
+        let settings = (try? settingsStore.load()) ?? .default
+        hudController.render(
+            .listening(
+                intent: intent,
+                triggerLabel: intent.triggerDisplayName(
+                    dictationTriggerKey: settings.triggerKey,
+                    translationTriggerKey: settings.translationTriggerKey
+                )
+            )
+        )
     }
 
     private func handleTriggerUp(for intent: SessionIntent, at date: Date) {

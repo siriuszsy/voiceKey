@@ -34,7 +34,7 @@ final class FixedTextInsertionProbe {
                 let result = try self.textInserter.insert(probeText, into: context)
 
                 if result.success {
-                    let message = result.usedFallback ? "已走回退写入测试" : "已直接写入测试文本"
+                    let message = result.usedFallback ? "已使用回退方案输出测试文本" : "已直接写入测试文本"
                     self.hudController.render(.success(message: message))
                 } else {
                     self.hudController.render(.error(message: result.failureReason ?? "写入测试失败"))

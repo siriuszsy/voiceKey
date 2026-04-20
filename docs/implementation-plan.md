@@ -37,7 +37,7 @@ v1 只做：
 交付：
 
 - `qwen3-asr-flash` 调通
-- `qwen3.5-flash` clean-up 调通
+- `qwen-flash` clean-up 调通
 - 两段串联验证通过
 
 状态：
@@ -75,7 +75,7 @@ v1 只做：
 - Accessibility 权限引导
 - `Right Option` hold-to-talk
 - 录音停止后调用 `qwen3-asr-flash`
-- transcript 调用 `qwen3.5-flash` clean-up
+- transcript 调用 `qwen-flash` clean-up
 - clean text 插入当前输入框
 - HUD 状态提示
 

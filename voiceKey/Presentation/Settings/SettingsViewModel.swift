@@ -6,7 +6,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var settings: AppSettings = .default
     @Published var apiKeyInput: String = ""
     @Published private(set) var permissionStatus = SystemPermissionStatus(
-        inputMonitoring: .needsSetup,
+        inputMonitoring: .notRequired,
         accessibility: .needsSetup,
         microphone: .needsSetup
     )
@@ -17,15 +17,18 @@ final class SettingsViewModel: ObservableObject {
     private let settingsStore: SettingsStore
     private let apiKeyStore: APIKeyStore
     private let permissionService: PermissionService
+    private let applySettings: ((AppSettings) throws -> Void)?
 
     init(
         settingsStore: SettingsStore,
         apiKeyStore: APIKeyStore,
-        permissionService: PermissionService
+        permissionService: PermissionService,
+        applySettings: ((AppSettings) throws -> Void)? = nil
     ) {
         self.settingsStore = settingsStore
         self.apiKeyStore = apiKeyStore
         self.permissionService = permissionService
+        self.applySettings = applySettings
         self.settings = (try? settingsStore.load()) ?? .default
         self.permissionStatus = permissionService.currentStatus()
         refreshAPIKeyStatus()
@@ -35,12 +38,20 @@ final class SettingsViewModel: ObservableObject {
         settings.triggerKey.displayName
     }
 
+    var translationTriggerKeyDisplayName: String {
+        settings.translationTriggerKey.displayName
+    }
+
+    var availableTranslationTriggerKeys: [TriggerKey] {
+        TriggerKey.translationChoices.filter { $0 != settings.triggerKey }
+    }
+
     var showsInputMonitoringSetup: Bool {
-        settings.triggerKey.requiresInputMonitoring
+        settings.usesInputMonitoringTrigger
     }
 
     var inputMonitoringState: PermissionState {
-        if settings.triggerKey.requiresInputMonitoring {
+        if settings.usesInputMonitoringTrigger {
             return permissionStatus.inputMonitoring
         }
 
@@ -52,11 +63,7 @@ final class SettingsViewModel: ObservableObject {
     }
 
     var setupSectionSubtitle: String {
-        if canUseCurrentDevelopmentFlow {
-            return "先把权限含义说清楚，再做具体授权。"
-        }
-
-        return "当前阶段最重要的是弄清楚：哪个权限影响录音，哪个权限影响写回。"
+        "当前默认用 Fn 系列触发。默认直接尝试注册；如果某台机器收不到，再把键盘监听当排障项。"
     }
 
     var microphoneDisplayName: String {
@@ -82,12 +89,25 @@ final class SettingsViewModel: ObservableObject {
             saveMessage = "翻译目标语言不能设为 auto。"
             return
         }
+        guard settings.triggerKey != settings.translationTriggerKey else {
+            saveMessage = "听写和翻译触发键不能使用同一组按键。"
+            return
+        }
+        guard TriggerKey.translationChoices.contains(settings.translationTriggerKey) else {
+            saveMessage = "翻译触发键当前只支持 `Fn`、`Fn + Control` 和 `Fn + Shift`。"
+            return
+        }
 
         settings.cleanupModel = normalizedCleanupModel(settings.cleanupModel)
         settings.translationSourceLanguage = normalizedSourceLanguage
         settings.translationTargetLanguage = normalizedTargetLanguage
-        try? settingsStore.save(settings)
-        saveMessage = "设置已保存"
+        do {
+            try settingsStore.save(settings)
+            try applySettings?(settings)
+            saveMessage = "设置已保存并已生效"
+        } catch {
+            saveMessage = "设置已保存，但热键应用失败：\(error.localizedDescription)"
+        }
     }
 
     func saveAPIKey() {
@@ -137,7 +157,7 @@ final class SettingsViewModel: ObservableObject {
 
     func requestAccessibility() {
         _ = permissionService.requestAccessibilityAccess()
-        setupMessage = "辅助功能通常需要在系统设置里手动打开。完成后回到这里会自动刷新。"
+        setupMessage = "辅助功能通常需要在系统设置里手动打开。完成后回到这里会自动刷新；没授权前会先回退到剪贴板。"
         refreshPermissions()
     }
 
@@ -163,15 +183,7 @@ final class SettingsViewModel: ObservableObject {
     }
 
     var permissionHintText: String {
-        if canUseCurrentDevelopmentFlow {
-            return "当前开发版已经能走热键和录音。真正影响“文字能不能写回当前光标”的，是辅助功能权限，不是百炼 API Key。"
-        }
-
-        if settings.triggerKey.requiresInputMonitoring {
-            return "当前触发键需要键盘监听权限。完成授权后回到这个窗口会自动刷新；如果热键还是没反应，请退出并重新打开音键。"
-        }
-
-        return "当前开发版的听写键和翻译键都不依赖键盘监听。录音靠麦克风权限，跨应用写回靠辅助功能权限。"
+        "默认热键是 `Fn` 听写、`Fn + Control` 翻译。当前实现会直接尝试注册；如果个别机器收不到，再去打开键盘监听。"
     }
 
     var permissionOverviewTitle: String {
@@ -179,19 +191,13 @@ final class SettingsViewModel: ObservableObject {
     }
 
     var permissionOverviewLines: [String] {
-        var lines = [
+        [
             "1. 麦克风：录音必须要开。",
-            "2. 辅助功能：把转写结果写回到别的应用输入框，必须要开。",
-            "3. 键盘监听：只有右侧 ⌥ / Fn 这种全局单键触发才依赖它。当前默认的 `⌘ + ;` 和翻译快捷键都不依赖。"
+            "2. 热键：默认是 `Fn` 听写，`Fn + Control` 翻译；`Fn + Shift` 可作为备选热键。",
+            "3. 辅助功能：授权后优先直写当前输入框。",
+            "4. 键盘监听：默认不主动要求；如果某台机器收不到 Fn，再去系统设置里打开。",
+            "5. 回退：没授权时会复制到剪贴板；有权限但直写失败时，再尝试粘贴回退。"
         ]
-
-        lines.append("成熟同类产品大概率也不是单纯靠 Cmd+V。更像是“辅助功能直写为主，剪贴板/粘贴只做回退”。")
-        return lines
-    }
-
-    private var canUseCurrentDevelopmentFlow: Bool {
-        let triggerReady = !settings.triggerKey.requiresInputMonitoring || permissionStatus.inputMonitoring == .granted
-        return triggerReady && permissionStatus.microphone == .granted
     }
 
     private func openSystemSettings(

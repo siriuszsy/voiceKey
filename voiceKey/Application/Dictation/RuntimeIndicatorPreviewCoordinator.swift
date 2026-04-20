@@ -152,7 +152,7 @@ final class RuntimeIndicatorPreviewCoordinator: TriggerEngineDelegate, Recording
     }
 
     private var currentTriggerKey: TriggerKey {
-        (try? settingsStore.load().triggerKey) ?? .rightOption
+        (try? settingsStore.load().triggerKey) ?? .fn
     }
 
     private func completeRecording(

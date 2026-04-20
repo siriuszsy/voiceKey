@@ -3,15 +3,12 @@ import CoreGraphics
 import Foundation
 
 enum NSEventMonitorTriggerError: LocalizedError {
-    case inputMonitoringNotTrusted
     case monitorCreationFailed
 
     var errorDescription: String? {
         switch self {
-        case .inputMonitoringNotTrusted:
-            return "Input Monitoring permission is required to monitor the trigger key."
         case .monitorCreationFailed:
-            return "Failed to install NSEvent monitors for trigger key listening."
+            return "触发键监听初始化失败。如果这台机器收不到 Fn 触发，再去系统设置里打开键盘监听。"
         }
     }
 }
@@ -67,10 +64,6 @@ final class NSEventMonitorTriggerEngine: TriggerEngine, @unchecked Sendable {
             return
         }
 
-        guard CGPreflightListenEventAccess() || CGRequestListenEventAccess() else {
-            throw NSEventMonitorTriggerError.inputMonitoringNotTrusted
-        }
-
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
             self?.handle(event)
         }
@@ -124,12 +117,16 @@ final class NSEventMonitorTriggerEngine: TriggerEngine, @unchecked Sendable {
 
     private func isPressed(event: NSEvent, triggerKey: TriggerKey) -> Bool {
         switch triggerKey {
-        case .commandSemicolon:
+        case .commandSemicolon, .controlCommandSemicolon:
             return false
         case .rightOption:
             return event.modifierFlags.contains(.option)
         case .fn:
             return event.modifierFlags.contains(.function)
+        case .fnControl:
+            return event.modifierFlags.contains(.function) && event.modifierFlags.contains(.control)
+        case .fnShift:
+            return event.modifierFlags.contains(.function) && event.modifierFlags.contains(.shift)
         }
     }
 }

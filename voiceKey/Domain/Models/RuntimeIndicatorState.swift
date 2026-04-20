@@ -22,7 +22,7 @@ enum RuntimeIndicatorCallStage: String, Codable, Sendable {
         case .cleaningTranscript:
             return "正在整理转写结果"
         case .insertingText:
-            return "正在写入当前输入框"
+            return "正在准备输出结果"
         }
     }
 
@@ -54,7 +54,7 @@ enum RuntimeIndicatorBlockedReason: String, Codable, Sendable {
         case .accessibilityPermission:
             return "辅助功能未授权"
         case .inputMonitoring:
-            return "键盘监听未授权"
+            return "Fn 热键不可用"
         }
     }
 
@@ -65,7 +65,7 @@ enum RuntimeIndicatorBlockedReason: String, Codable, Sendable {
         case .accessibilityPermission:
             return "请在系统设置中允许辅助功能访问"
         case .inputMonitoring:
-            return "请允许键盘监听，这样才能捕获右侧 ⌥ 键"
+            return "如果这台机器收不到 Fn 热键，请在系统设置中允许键盘监听"
         }
     }
 }

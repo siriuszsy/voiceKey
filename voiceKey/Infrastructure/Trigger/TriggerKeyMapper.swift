@@ -4,11 +4,11 @@ import Foundation
 enum TriggerKeyMapper {
     static func keyCode(for key: TriggerKey) -> CGKeyCode {
         switch key {
-        case .commandSemicolon:
+        case .commandSemicolon, .controlCommandSemicolon:
             return 41
         case .rightOption:
             return 61
-        case .fn:
+        case .fn, .fnControl, .fnShift:
             return 63
         }
     }

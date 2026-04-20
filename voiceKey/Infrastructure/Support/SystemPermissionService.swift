@@ -7,18 +7,14 @@ import Foundation
 final class SystemPermissionService: PermissionService {
     func currentStatus() -> SystemPermissionStatus {
         SystemPermissionStatus(
-            inputMonitoring: CGPreflightListenEventAccess() ? .granted : .needsSetup,
-            accessibility: AXIsProcessTrusted() ? .granted : .needsSetup,
+            inputMonitoring: .notRequired,
+            accessibility: accessibilityState,
             microphone: microphoneState
         )
     }
 
     func requestInputMonitoringAccess() -> Bool {
-        if CGPreflightListenEventAccess() {
-            return true
-        }
-
-        return CGRequestListenEventAccess()
+        false
     }
 
     func requestAccessibilityAccess() -> Bool {
@@ -68,6 +64,9 @@ final class SystemPermissionService: PermissionService {
         }
     }
 
+    private var accessibilityState: PermissionState {
+        AXIsProcessTrusted() ? .granted : .needsSetup
+    }
     private func preferenceURLs(for permission: SystemPermissionKind) -> [URL] {
         let rawValues: [String]
 
