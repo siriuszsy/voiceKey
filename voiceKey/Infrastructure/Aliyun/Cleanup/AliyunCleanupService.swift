@@ -24,12 +24,7 @@ final class AliyunCleanupService: CleanupService {
     ) async throws -> CleanText {
         let apiKey = try loadAPIKey()
         let model = currentCleanupModel()
-        let profile = await classifyPromptProfile(
-            transcript: transcript,
-            context: context,
-            apiKey: apiKey,
-            model: model
-        )
+        let profile = inferredPromptProfile(for: transcript.rawText)
         let requestBody = try JSONEncoder().encode(
             CleanupRequest(
                 model: model,
@@ -56,36 +51,8 @@ final class AliyunCleanupService: CleanupService {
         return CleanText(value: cleanedText)
     }
 
-    private func classifyPromptProfile(
-        transcript: ASRTranscript,
-        context: CleanupContext,
-        apiKey: String,
-        model: String
-    ) async -> CleanupPromptProfile {
-        if let heuristicProfile = obviousProfile(for: transcript.rawText) {
-            return heuristicProfile
-        }
-
-        do {
-            let requestBody = try JSONEncoder().encode(
-                ClassificationRequest(
-                    model: model,
-                    systemPrompt: promptBuilder.classifierSystemPrompt(for: context),
-                    userPrompt: promptBuilder.classifierUserPrompt(for: transcript)
-                )
-            )
-            let request = try AliyunRequestFactory.makeCleanupRequest(apiKey: apiKey, body: requestBody)
-            let (data, response) = try await httpClient.perform(request)
-
-            guard (200..<300).contains(response.statusCode) else {
-                return .plain
-            }
-
-            let decoded = try JSONDecoder().decode(AliyunCleanupResponse.self, from: data)
-            return CleanupPromptProfile.fromClassifierOutput(decoded.cleanedText)
-        } catch {
-            return .plain
-        }
+    private func inferredPromptProfile(for rawText: String) -> CleanupPromptProfile {
+        obviousProfile(for: rawText) ?? .plain
     }
 
     private func obviousProfile(for rawText: String) -> CleanupPromptProfile? {
@@ -218,33 +185,6 @@ final class AliyunTranslationService: TranslationService, @unchecked Sendable {
 }
 
 private extension AliyunCleanupService {
-    struct ClassificationRequest: Encodable {
-        let model: String
-        let messages: [Message]
-        let stream: Bool
-        let temperature: Double
-        let enableThinking: Bool
-
-        enum CodingKeys: String, CodingKey {
-            case model
-            case messages
-            case stream
-            case temperature
-            case enableThinking = "enable_thinking"
-        }
-
-        init(model: String, systemPrompt: String, userPrompt: String) {
-            self.model = model
-            self.messages = [
-                Message(role: "system", content: systemPrompt),
-                Message(role: "user", content: userPrompt)
-            ]
-            self.stream = false
-            self.temperature = 0.0
-            self.enableThinking = false
-        }
-    }
-
     struct CleanupRequest: Encodable {
         let model: String
         let messages: [Message]

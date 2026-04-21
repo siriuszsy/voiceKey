@@ -17,13 +17,13 @@ final class SettingsViewModel: ObservableObject {
     private let settingsStore: SettingsStore
     private let apiKeyStore: APIKeyStore
     private let permissionService: PermissionService
-    private let applySettings: ((AppSettings) throws -> Void)?
+    private let applySettings: ((AppSettings, AppSettings) throws -> Void)?
 
     init(
         settingsStore: SettingsStore,
         apiKeyStore: APIKeyStore,
         permissionService: PermissionService,
-        applySettings: ((AppSettings) throws -> Void)? = nil
+        applySettings: ((AppSettings, AppSettings) throws -> Void)? = nil
     ) {
         self.settingsStore = settingsStore
         self.apiKeyStore = apiKeyStore
@@ -83,6 +83,7 @@ final class SettingsViewModel: ObservableObject {
     }
 
     func save() {
+        let persistedSettings = (try? settingsStore.load()) ?? .default
         let normalizedSourceLanguage = normalizedTranslationSourceLanguage(settings.translationSourceLanguage)
         let normalizedTargetLanguage = normalizedTranslationTargetLanguage(settings.translationTargetLanguage)
         guard normalizedTargetLanguage.caseInsensitiveCompare("auto") != .orderedSame else {
@@ -103,10 +104,28 @@ final class SettingsViewModel: ObservableObject {
         settings.translationTargetLanguage = normalizedTargetLanguage
         do {
             try settingsStore.save(settings)
-            try applySettings?(settings)
+            try applySettings?(persistedSettings, settings)
             saveMessage = "设置已保存并已生效"
         } catch {
             saveMessage = "设置已保存，但热键应用失败：\(error.localizedDescription)"
+        }
+    }
+
+    func applyASRModeChange() {
+        let persistedSettings = (try? settingsStore.load()) ?? .default
+        guard persistedSettings.asrMode != settings.asrMode else {
+            return
+        }
+
+        var updatedSettings = persistedSettings
+        updatedSettings.asrMode = settings.asrMode
+
+        do {
+            try settingsStore.save(updatedSettings)
+            try applySettings?(persistedSettings, updatedSettings)
+            saveMessage = "识别模式已切换并已生效"
+        } catch {
+            saveMessage = "识别模式已切换，但应用失败：\(error.localizedDescription)"
         }
     }
 

@@ -43,6 +43,11 @@ struct SettingsView: View {
                 viewModel.settings.translationTriggerKey = viewModel.availableTranslationTriggerKeys.first ?? .fnShift
             }
         }
+        .onChange(of: viewModel.settings.asrMode) { _, _ in
+            DispatchQueue.main.async {
+                viewModel.applyASRModeChange()
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             viewModel.refreshPermissions()
             viewModel.refreshAPIKeyStatus()

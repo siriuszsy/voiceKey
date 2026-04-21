@@ -127,28 +127,39 @@ final class AppBootstrap {
     }
 }
 
-private final class SelectableASRService: ASRService, @unchecked Sendable {
+final class SelectableASRService: ASRService, @unchecked Sendable {
     private let settingsStore: SettingsStore
     private let offlineService: ASRService
     private let realtimeService: ASRService
+    private let logger: OSLogLogger
 
     init(
         settingsStore: SettingsStore,
         offlineService: ASRService,
-        realtimeService: ASRService
+        realtimeService: ASRService,
+        logger: OSLogLogger = OSLogLogger()
     ) {
         self.settingsStore = settingsStore
         self.offlineService = offlineService
         self.realtimeService = realtimeService
+        self.logger = logger
     }
 
     func transcribe(_ payload: AudioPayload) async throws -> ASRTranscript {
         let asrMode = currentASRMode()
+        logger.info("[ASR] Transcribe requested. mode=\(asrMode.rawValue), durationMs=\(payload.durationMs)")
         switch asrMode {
         case .offline:
             return try await offlineService.transcribe(payload)
         case .realtime:
-            return try await realtimeService.transcribe(payload)
+            do {
+                return try await realtimeService.transcribe(payload)
+            } catch {
+                logger.error(
+                    "[ASR] Realtime transcription failed, falling back to offline. reason=\(error.localizedDescription)"
+                )
+                return try await offlineService.transcribe(payload)
+            }
         }
     }
 
@@ -159,12 +170,21 @@ private final class SelectableASRService: ASRService, @unchecked Sendable {
 
 extension SelectableASRService: LiveStreamingASRService {
     func beginLiveTranscription(languageCode: String?) async throws -> Bool {
-        guard currentASRMode() == .realtime,
+        let asrMode = currentASRMode()
+        logger.info("[ASR] Begin live transcription requested. mode=\(asrMode.rawValue)")
+        guard asrMode == .realtime,
               let liveService = realtimeService as? any LiveStreamingASRService else {
             return false
         }
 
-        return try await liveService.beginLiveTranscription(languageCode: languageCode)
+        do {
+            return try await liveService.beginLiveTranscription(languageCode: languageCode)
+        } catch {
+            logger.error(
+                "[ASR] Realtime live start failed, will fall back to offline. reason=\(error.localizedDescription)"
+            )
+            throw error
+        }
     }
 
     func appendLiveAudioChunk(_ chunk: AudioChunk) async throws {

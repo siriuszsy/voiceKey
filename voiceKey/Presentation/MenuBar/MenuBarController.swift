@@ -37,12 +37,20 @@ final class MenuBarController {
                     settingsStore: environment.settingsStore,
                     apiKeyStore: environment.apiKeyStore,
                     permissionService: environment.permissionService,
-                    applySettings: { [weak self, weak environment] settings in
-                        if let triggerEngine = environment?.triggerEngine as? HybridTriggerEngine {
+                    applySettings: { [weak self, weak environment] previousSettings, settings in
+                        if (previousSettings.triggerKey != settings.triggerKey
+                            || previousSettings.translationTriggerKey != settings.translationTriggerKey),
+                           let triggerEngine = environment?.triggerEngine as? HybridTriggerEngine {
                             try triggerEngine.updateTriggerConfiguration(
                                 dictationKey: settings.triggerKey,
                                 translationKey: settings.translationTriggerKey
                             )
+                        }
+                        if previousSettings.asrMode != settings.asrMode,
+                           let liveService = environment?.asrService as? any LiveStreamingASRService {
+                            Task {
+                                await liveService.cancelLiveTranscription()
+                            }
                         }
                         self?.refreshMenu()
                     }
