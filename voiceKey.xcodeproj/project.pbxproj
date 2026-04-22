@@ -136,6 +136,7 @@
 		1A35BCDE8BE872481E4126DB /* Signing.local.example.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.local.example.xcconfig; sourceTree = "<group>"; };
 		1CB7C66A951A66838017C1C6 /* RecordingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingEngine.swift; sourceTree = "<group>"; };
 		209D6A2FE3435C6CCB30D776 /* TriggerEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerEvent.swift; sourceTree = "<group>"; };
+		20D211158381099196CF0AFD /* Signing.github-release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "Signing.github-release.xcconfig"; sourceTree = "<group>"; };
 		20D2A75B4EFAFECF3EE83EAF /* AVAudioRecordingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVAudioRecordingEngine.swift; sourceTree = "<group>"; };
 		22AEDB3D3EB438D70CC198DD /* AliyunASRService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliyunASRService.swift; sourceTree = "<group>"; };
 		278ED059DAD24ECC885D1572 /* DictationMetricsTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationMetricsTracker.swift; sourceTree = "<group>"; };
@@ -615,6 +616,7 @@
 			children = (
 				E02526E66016BED2D0765432 /* Constants.swift */,
 				6B670C931E72E4FE10A08852 /* Info.plist */,
+				20D211158381099196CF0AFD /* Signing.github-release.xcconfig */,
 				1A35BCDE8BE872481E4126DB /* Signing.local.example.xcconfig */,
 				D6EC4A86A9D20466054D72A4 /* Signing.local.xcconfig */,
 				B4264D72D9A66416537CBF90 /* Signing.xcconfig */,
@@ -682,11 +684,9 @@
 				TargetAttributes = {
 					4EABC7D2389E2901279BF5CE = {
 						DevelopmentTeam = "$(VOICEKEY_DEVELOPMENT_TEAM)";
-						ProvisioningStyle = Automatic;
 					};
 					DB1073265C605449409F44EB = {
 						DevelopmentTeam = "$(VOICEKEY_DEVELOPMENT_TEAM)";
-						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -869,6 +869,103 @@
 			};
 			name = Debug;
 		};
+		15C5BD14304FF9FCCA1250A0 /* GitHubRelease */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.littlerobot.voicekeyTests;
+				PRODUCT_MODULE_NAME = voiceKeyTests;
+				PRODUCT_NAME = voiceKeyTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/voiceKey.app/Contents/MacOS/voiceKey";
+			};
+			name = GitHubRelease;
+		};
+		2D72753AA6EABFBCA11DC431 /* GitHubRelease */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = voiceKey/Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_MODULE_NAME = voiceKey;
+				SDKROOT = macosx;
+			};
+			name = GitHubRelease;
+		};
+		3F4B5E293A742E1289AE32ED /* GitHubRelease */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 20D211158381099196CF0AFD /* Signing.github-release.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 4;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.littlerobot.voicekey;
+				PRODUCT_NAME = voiceKey;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = GitHubRelease;
+		};
 		4B6CF33ABAE5191D1962F98C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -923,9 +1020,8 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -938,7 +1034,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.2;
+				MARKETING_VERSION = 1.0.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.littlerobot.voicekey;
@@ -1001,9 +1097,8 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -1022,7 +1117,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.2;
+				MARKETING_VERSION = 1.0.3;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1059,6 +1154,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9FE761A7AC3C6CD7B376DDEE /* Debug */,
+				3F4B5E293A742E1289AE32ED /* GitHubRelease */,
 				5817B162FB83D8F6B21C6FDE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -1068,6 +1164,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5C7686316FCCD4F427F5340E /* Debug */,
+				2D72753AA6EABFBCA11DC431 /* GitHubRelease */,
 				BC2EDFD29EF6B9C9144517E8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -1077,6 +1174,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0304C176644ECD34365BF22A /* Debug */,
+				15C5BD14304FF9FCCA1250A0 /* GitHubRelease */,
 				4B6CF33ABAE5191D1962F98C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;

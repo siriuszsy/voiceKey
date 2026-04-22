@@ -1,6 +1,6 @@
 # 音键发布说明
 
-最后更新：2026-04-20
+最后更新：2026-04-22
 
 ## 1. 发布策略
 
@@ -21,9 +21,9 @@
 
 说明：
 
-- GitHub Release 会提供一个已经打包好的 `.app` 压缩包，方便普通用户直接安装测试。
-- 当前 Release 产物优先保证可用性，不等同于 Mac App Store 版。
-- 如果后续上架 Mac App Store，会单独收口沙盒、权限和分发链路。
+- GitHub Release 现在走正式的 `Developer ID + notarization` 链路。
+- GitHub 版和未来的 Mac App Store 版不是同一个最终分发包。
+- GitHub 版优先保留辅助功能直写当前输入框的能力，App Store 版会单独收口沙盒和功能边界。
 
 ## 2. 如何从源码编译
 
@@ -33,7 +33,7 @@
 - Xcode
 - 阿里云百炼 API Key
 
-### 2.1 直接构建
+### 2.1 本地调试构建
 
 ```bash
 xcodebuild -project voiceKey.xcodeproj \
@@ -43,15 +43,47 @@ xcodebuild -project voiceKey.xcodeproj \
   build
 ```
 
-### 2.2 运行
+### 2.2 正式 GitHub 发布构建
 
-构建产物默认在：
+前提：
 
-```text
-.derived/Build/Products/Debug/voiceKey.app
+- 本机已经安装 `Developer ID Application`
+- 已经配置 `notarytool` 凭据
+
+先存一次 notarization 凭据：
+
+```bash
+APPLE_ID="你的 Apple ID" \
+APP_SPECIFIC_PASSWORD="你的 app-specific password" \
+bash scripts/store_notary_credentials.sh
 ```
 
-如果只是本地调试，可以直接从 Xcode 运行。
+然后执行正式构建：
+
+```bash
+bash scripts/build_github_release.sh
+```
+
+正式产物默认在：
+
+```text
+dist/
+├── voiceKey-1.0.3-macos.dmg
+├── voiceKey-1.0.3-macos.dmg.sha256
+├── voiceKey-1.0.3-macos.zip
+└── voiceKey-1.0.3-macos.zip.sha256
+```
+
+脚本会自动完成：
+
+- `GitHubRelease` 配置归档
+- `Developer ID Application` 导出
+- app bundle notarization
+- app stapling
+- DMG 构建
+- DMG notarization
+- DMG stapling
+- SHA-256 生成
 
 ## 3. API Key
 
@@ -92,43 +124,45 @@ API Key 不会写进仓库。
 
 - 监听 `Fn` / 右侧 `⌥` 这类全局单键触发
 
-当前开发版默认触发键是：
+当前 GitHub 直装版默认触发键是：
 
 `Fn` 和 `Fn + Control`
 
 大多数机器上会直接尝试注册；如果个别机器收不到 `Fn`，再手动打开键盘监听。
 
-## 5. 苹果编译与本地签名说明
+## 5. GitHub 正式分发与 Apple Store 的区别
 
-项目里保留的本地签名脚本，主要是为了处理苹果本地编译、调试签名和权限稳定性问题。
+这两个不是同一个最终产物。
 
-它的用途是：
+### 5.1 GitHub 直装版
 
-- 让本地调试版 `.app` 更稳定地运行
-- 降低辅助功能权限漂移
-- 方便重复构建后的本地测试
+- 签名：`Developer ID Application`
+- 分发：GitHub Releases
+- 校验：Apple notarization
+- 产物：`DMG` 和 `ZIP`
+- 目标：让普通用户从 GitHub 下载后直接安装
+- 能力边界：优先保留辅助功能直写当前输入框
 
-如果你已经加入 Apple Developer Program，推荐优先使用苹果正式签名链路，而不是继续依赖仓库里的本地自签名证书。
+### 5.2 Mac App Store 版
 
-最稳的本地开发做法是：
+- 签名和审核：走 App Store Connect
+- 分发：Mac App Store
+- 沙盒：必须单独收口
+- 功能边界：很可能和 GitHub 版不同
 
-- 在 `Xcode > Settings > Accounts` 里添加你的 Apple 账号
-- 让 Xcode 为这台机器创建或下载 `Apple Development` 证书
-- 将你的 `Team ID` 写入本地文件 `voiceKey/Support/Signing.local.xcconfig`
-- 保持 `Bundle Identifier` 稳定
-- 保持 `.app` 安装路径稳定
+### 5.3 本地调试版
 
-注意：
+- 签名：`Apple Development`
+- 用途：开发、调试、权限排查
+- 不用于公开 GitHub 分发
 
-- `Apple Developer` App 本身不负责给 Xcode 安装本地签名证书
-- 真正影响本地签名和 provisioning 的仍然是 `Xcode > Settings > Accounts`
+## 6. 苹果编译与本地调试签名说明
 
-如果你只是本地开发，Xcode 自带的本地运行签名通常就够了。  
-如果你需要更稳定地处理辅助功能权限，建议：
+项目里仍然保留本地调试签名脚本，主要是为了处理开发阶段的：
 
-- 保持 `Bundle Identifier` 稳定
-- 保持 `.app` 安装路径稳定
-- 不要一边测权限一边频繁改 app 身份
+- Xcode 重编后的本地签名
+- 权限稳定性
+- 重复安装与调试
 
 当前仓库保留了本地签名脚本，但不会公开任何证书和密码。
 
@@ -138,7 +172,7 @@ API Key 不会写进仓库。
 
 - [Vibe Coding 开发说明](./vibe-coding-guide.md)
 
-当前安装脚本会优先尝试使用 `login.keychain-db` 里的 `Apple Development` 身份；如果这台机器还没有苹果正式证书，才会回退到仓库原有的本地开发签名脚本。
+当前调试安装脚本会优先尝试使用 `login.keychain-db` 里的 `Apple Development` 身份；如果这台机器还没有苹果正式证书，才会回退到仓库原有的本地开发签名脚本。
 
 ## 6. 界面预览素材建议
 
@@ -167,10 +201,9 @@ API Key 不会写进仓库。
 推荐：
 
 - GitHub 仓库公开源码
-- GitHub Release 提供 `.app` 压缩包和使用手册
+- GitHub Release 提供 notarized `DMG`、备用 `ZIP` 和使用手册
 
 当前不推荐：
 
 - 把本地签名证书或 API Key 打包进仓库或 Release
-
-等后续如果做 `Developer ID + notarization`，再考虑提供稳定的可安装版本。
+- 把本地调试版 `Apple Development` 包直接发给普通用户

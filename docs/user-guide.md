@@ -1,4 +1,4 @@
-# 音键 1.0.2 使用手册
+# 音键 1.0.3 使用手册
 
 最后更新：2026-04-21
 
@@ -18,13 +18,14 @@
 ## 2. 下载与安装
 
 1. 打开 [GitHub Releases](https://github.com/siriuszsy/voiceKey/releases)。
-2. 下载 `voiceKey-1.0.2-macos.zip`。
-3. 解压后把 `voiceKey.app` 拖到 `Applications`。
-4. 首次启动时，如果 macOS 提示应用来自互联网或开发者未验证，先右键 `voiceKey.app`，选择“打开”。
+2. 优先下载 `voiceKey-1.0.3-macos.dmg`。如果你更习惯压缩包，也可以下载 `voiceKey-1.0.3-macos.zip`。
+3. 如果你下载的是 `DMG`，双击打开后把 `voiceKey.app` 拖到 `Applications`。
+4. 如果你下载的是 `ZIP`，先解压，再把 `voiceKey.app` 拖到 `Applications`。
+5. 首次启动时，如果 macOS 仍提示应用来自互联网，先右键 `voiceKey.app`，选择“打开”。
 
 说明：
 
-- 当前 GitHub Release 版优先保证可用，不等同于 Mac App Store 版。
+- 当前 GitHub Release 版是 `Developer ID + notarized` 的站外分发包，不等同于 Mac App Store 版。
 - 如果系统拦截启动，通常按一次“仍要打开”即可。
 
 ## 3. 首次启动后要做的事

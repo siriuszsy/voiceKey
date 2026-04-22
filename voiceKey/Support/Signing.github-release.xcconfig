@@ -1,0 +1,11 @@
+#include? "Signing.local.xcconfig"
+
+// GitHub direct distribution uses Developer ID instead of Apple Development.
+// Keep this path separate from Debug and App Store style Release so the
+// notarized build can preserve direct Accessibility-based insertion.
+CODE_SIGN_STYLE = Manual
+DEVELOPMENT_TEAM = $(VOICEKEY_DEVELOPMENT_TEAM)
+CODE_SIGN_IDENTITY = Developer ID Application
+PROVISIONING_PROFILE_SPECIFIER =
+CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO
+ENABLE_HARDENED_RUNTIME = YES
