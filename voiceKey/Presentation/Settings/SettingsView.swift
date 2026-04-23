@@ -591,7 +591,7 @@ struct SettingsView: View {
         switch viewModel.apiKeyAvailability {
         case .sessionLoaded, .environmentProvided:
             return true
-        case .unavailable:
+        case .persistedButNotLoaded, .unavailable:
             return false
         }
     }
@@ -602,6 +602,8 @@ struct SettingsView: View {
             return "环境变量"
         case .sessionLoaded:
             return "本次可用"
+        case .persistedButNotLoaded:
+            return "已保存"
         case .unavailable:
             return "未加载"
         }
@@ -613,6 +615,8 @@ struct SettingsView: View {
             return "lock.shield.fill"
         case .sessionLoaded:
             return "lock.open.fill"
+        case .persistedButNotLoaded:
+            return "lock.fill"
         case .unavailable:
             return "lock.fill"
         }

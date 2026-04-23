@@ -70,6 +70,7 @@ final class SettingsViewModelTests: XCTestCase {
 
         XCTAssertEqual(sessionAPIKeyStore.loadCallCount, 1)
         XCTAssertEqual(persistentAPIKeyStore.loadCallCount, 0)
+        XCTAssertEqual(persistentAPIKeyStore.hasStoredKeyCallCount, 1)
     }
 
     func testUseAPIKeyForCurrentSessionOnlyTouchesSessionStore() {
@@ -91,6 +92,7 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertEqual(sessionAPIKeyStore.savedKeys, ["session-key"])
         XCTAssertTrue(persistentAPIKeyStore.savedKeys.isEmpty)
         XCTAssertEqual(viewModel.apiKeyAvailability, .sessionLoaded)
+        XCTAssertEqual(viewModel.apiKeyInput, "session-key")
     }
 
     func testSaveAPIKeyToPersistentStoreAlsoLoadsCurrentSession() {
@@ -112,6 +114,7 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertEqual(sessionAPIKeyStore.savedKeys, ["saved-key"])
         XCTAssertEqual(persistentAPIKeyStore.savedKeys, ["saved-key"])
         XCTAssertEqual(viewModel.apiKeyAvailability, .sessionLoaded)
+        XCTAssertEqual(viewModel.apiKeyInput, "saved-key")
     }
 
     func testLoadSavedAPIKeyRequiresExplicitAction() {
@@ -134,6 +137,7 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertEqual(persistentAPIKeyStore.loadCallCount, 1)
         XCTAssertEqual(sessionAPIKeyStore.savedKeys, ["stored-key"])
         XCTAssertEqual(viewModel.apiKeyAvailability, .sessionLoaded)
+        XCTAssertEqual(viewModel.apiKeyInput, "stored-key")
     }
 
     func testEnvironmentAPIKeyWinsWithoutTouchingStores() {
@@ -150,8 +154,29 @@ final class SettingsViewModelTests: XCTestCase {
         )
 
         XCTAssertEqual(viewModel.apiKeyAvailability, .environmentProvided)
+        XCTAssertEqual(viewModel.apiKeyInput, "env-key")
         XCTAssertEqual(sessionAPIKeyStore.loadCallCount, 0)
         XCTAssertEqual(persistentAPIKeyStore.loadCallCount, 0)
+        XCTAssertEqual(persistentAPIKeyStore.hasStoredKeyCallCount, 0)
+    }
+
+    func testRefreshAPIKeyStatusShowsPersistedButNotLoadedState() {
+        let settingsStore = SpySettingsStore()
+        let sessionAPIKeyStore = SpyAPIKeyStore()
+        let persistentAPIKeyStore = SpyAPIKeyStore(storedValue: "stored-key")
+        let permissionService = StubPermissionService()
+        let viewModel = SettingsViewModel(
+            settingsStore: settingsStore,
+            sessionAPIKeyStore: sessionAPIKeyStore,
+            persistentAPIKeyStore: persistentAPIKeyStore,
+            permissionService: permissionService,
+            environmentProvider: { [:] }
+        )
+
+        XCTAssertEqual(viewModel.apiKeyAvailability, .persistedButNotLoaded)
+        XCTAssertEqual(viewModel.apiKeyStatusText, "本机安全存储中已保存 API Key，但当前会话未加载。")
+        XCTAssertEqual(persistentAPIKeyStore.loadCallCount, 0)
+        XCTAssertEqual(viewModel.apiKeyInput, "")
     }
 }
 
@@ -171,6 +196,7 @@ private final class SpyAPIKeyStore: APIKeyStore {
     private let storedValue: String?
     private(set) var savedKeys: [String] = []
     private(set) var loadCallCount: Int = 0
+    private(set) var hasStoredKeyCallCount: Int = 0
 
     init(storedValue: String? = nil) {
         self.storedValue = storedValue
@@ -186,6 +212,14 @@ private final class SpyAPIKeyStore: APIKeyStore {
             return storedValue
         }
         throw NSError(domain: "SettingsViewModelTests", code: 1)
+    }
+
+    func hasStoredKey() -> Bool {
+        hasStoredKeyCallCount += 1
+        if let storedValue {
+            return !storedValue.isEmpty
+        }
+        return false
     }
 }
 

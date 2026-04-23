@@ -9,6 +9,15 @@ final class AXTextInserter: TextInserter {
         _ text: String,
         into context: FocusedContext
     ) throws -> InsertionResult {
+        if context.bundleIdentifier == BuildInfo.bundleIdentifier {
+            logger.notice("AX direct insert skipped for self app. targetApp=\(context.applicationName, privacy: .public)")
+            return InsertionResult(
+                success: false,
+                usedFallback: false,
+                failureReason: "当前测试框将改用粘贴回退。"
+            )
+        }
+
         guard AXIsProcessTrusted() else {
             logger.error("AX direct insert blocked: accessibility permission missing. targetApp=\(context.applicationName, privacy: .public)")
             return InsertionResult(

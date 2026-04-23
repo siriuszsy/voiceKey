@@ -105,6 +105,10 @@ private struct StubAPIKeyStore: APIKeyStore {
     func load() throws -> String {
         "test-api-key"
     }
+
+    func hasStoredKey() -> Bool {
+        true
+    }
 }
 
 private struct FixedWebSocketTaskProvider: RealtimeWebSocketTaskProvider {

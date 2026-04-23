@@ -47,4 +47,24 @@ final class KeychainAPIKeyStore: APIKeyStore {
 
         return value
     }
+
+    func hasStoredKey() -> Bool {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecUseAuthenticationUI as String: kSecUseAuthenticationUIFail
+        ]
+
+        let status = SecItemCopyMatching(query as CFDictionary, nil)
+        switch status {
+        case errSecSuccess, errSecInteractionNotAllowed:
+            return true
+        case errSecItemNotFound:
+            return false
+        default:
+            return false
+        }
+    }
 }

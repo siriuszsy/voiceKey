@@ -8,6 +8,7 @@ struct MenuDebugItem {
 struct MenuContentBuilder {
     func buildMenu(
         settings: AppSettings,
+        onboardingTarget: ClosureMenuAction,
         settingsTarget: ClosureMenuAction,
         insertionProbeTarget: ClosureMenuAction
     ) -> NSMenu {
@@ -20,6 +21,12 @@ struct MenuContentBuilder {
         subtitleItem.isEnabled = false
         menu.addItem(subtitleItem)
         menu.addItem(.separator())
+
+        let onboardingTitle = settings.hasCompletedOnboarding ? "打开首次引导" : "继续首次引导"
+        let onboardingItem = NSMenuItem(title: onboardingTitle, action: nil, keyEquivalent: "")
+        onboardingItem.target = onboardingTarget
+        onboardingItem.action = #selector(ClosureMenuAction.invoke)
+        menu.addItem(onboardingItem)
 
         let settingsItem = NSMenuItem(title: "打开设置", action: nil, keyEquivalent: ",")
         settingsItem.target = settingsTarget

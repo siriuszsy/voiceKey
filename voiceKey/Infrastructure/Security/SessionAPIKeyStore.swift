@@ -22,4 +22,14 @@ final class SessionAPIKeyStore: APIKeyStore, @unchecked Sendable {
 
         return storedKey
     }
+
+    func hasStoredKey() -> Bool {
+        lock.lock()
+        let storedKey = key
+        lock.unlock()
+        guard let storedKey else {
+            return false
+        }
+        return !storedKey.isEmpty
+    }
 }

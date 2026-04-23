@@ -17,6 +17,7 @@ final class JSONSettingsStoreTests: XCTestCase {
 
         XCTAssertEqual(settings.asrMode, .offline)
         XCTAssertEqual(settings.cleanupModel, "qwen-flash")
+        XCTAssertFalse(settings.hasCompletedOnboarding)
         XCTAssertEqual(settings.triggerKey, .fn)
         XCTAssertEqual(settings.translationTriggerKey, .fnControl)
         XCTAssertEqual(settings.translationSourceLanguage, "auto")
@@ -27,6 +28,7 @@ final class JSONSettingsStoreTests: XCTestCase {
         XCTAssertEqual(
             AppSettings.default,
             AppSettings(
+                hasCompletedOnboarding: false,
                 triggerKey: .fn,
                 translationTriggerKey: .fnControl,
                 microphoneDeviceID: "system-default",

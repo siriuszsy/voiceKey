@@ -29,7 +29,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
                 do {
                     try await environment.orchestrator.start()
-                    self.menuBarController?.openSettings()
+                    let settings = (try? environment.settingsStore.load()) ?? .default
+                    if settings.hasCompletedOnboarding {
+                        self.menuBarController?.openSettings()
+                    } else {
+                        self.menuBarController?.openOnboarding()
+                    }
                 } catch {
                     let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     self.logger.error("Failed to start orchestrator: \(message, privacy: .public)")

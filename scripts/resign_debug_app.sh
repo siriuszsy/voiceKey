@@ -6,11 +6,30 @@ APP_PATH="${1:-$ROOT_DIR/.derived/Build/Products/Debug/voiceKey.app}"
 LOGIN_KEYCHAIN_PATH="$HOME/Library/Keychains/login.keychain-db"
 LOCAL_KEYCHAIN_PATH="${VOICEKEY_CODESIGN_KEYCHAIN_PATH:-$HOME/Library/Keychains/voiceKey-dev-v2.keychain-db}"
 LOCAL_CERT_NAME="${VOICEKEY_CODESIGN_CERT_NAME:-voiceKey Local Development}"
+PREFERRED_APPLE_DEVELOPMENT_IDENTITY="${VOICEKEY_APPLE_DEVELOPMENT_IDENTITY:-}"
+PREFERRED_APPLE_DEVELOPMENT_HINT="${VOICEKEY_APPLE_DEVELOPMENT_HINT:-985631614@qq.com}"
 KEYCHAIN_PATH=""
 CERT_NAME=""
 KEYCHAIN_PASSWORD="${VOICEKEY_CODESIGN_KEYCHAIN_PASSWORD:-}"
 
 detect_apple_development_identity() {
+  if [[ -n "$PREFERRED_APPLE_DEVELOPMENT_IDENTITY" ]]; then
+    printf '%s\n' "$PREFERRED_APPLE_DEVELOPMENT_IDENTITY"
+    return
+  fi
+
+  if [[ -n "$PREFERRED_APPLE_DEVELOPMENT_HINT" ]]; then
+    local hinted_identity
+    hinted_identity="$(
+      security find-identity -v -p codesigning "$LOGIN_KEYCHAIN_PATH" 2>/dev/null \
+        | awk -F'"' -v hint="$PREFERRED_APPLE_DEVELOPMENT_HINT" '/Apple Development/ && index($2, hint) { print $2; exit }'
+    )"
+    if [[ -n "$hinted_identity" ]]; then
+      printf '%s\n' "$hinted_identity"
+      return
+    fi
+  fi
+
   security find-identity -v -p codesigning "$LOGIN_KEYCHAIN_PATH" 2>/dev/null \
     | awk -F'"' '/Apple Development/ { print $2; exit }'
 }

@@ -24,4 +24,8 @@ final class ResilientAPIKeyStore: APIKeyStore {
             return try fallback.load()
         }
     }
+
+    func hasStoredKey() -> Bool {
+        primary.hasStoredKey() || fallback.hasStoredKey()
+    }
 }

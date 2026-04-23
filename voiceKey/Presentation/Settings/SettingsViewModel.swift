@@ -3,6 +3,7 @@ import Foundation
 
 enum APIKeyAvailability: Equatable {
     case unavailable
+    case persistedButNotLoaded
     case sessionLoaded
     case environmentProvided
 }
@@ -127,7 +128,7 @@ final class SettingsViewModel: ObservableObject {
 
         do {
             try sessionAPIKeyStore.save(trimmed)
-            apiKeyInput = ""
+            apiKeyInput = trimmed
             apiKeyAvailability = .sessionLoaded
             apiKeyStatusText = "本次运行已加载 API Key。退出应用后需要重新粘贴或手动读取。"
         } catch {
@@ -146,7 +147,7 @@ final class SettingsViewModel: ObservableObject {
         do {
             try persistentAPIKeyStore.save(trimmed)
             try sessionAPIKeyStore.save(trimmed)
-            apiKeyInput = ""
+            apiKeyInput = trimmed
             apiKeyAvailability = .sessionLoaded
             apiKeyStatusText = "API Key 已存入本机安全存储，本次运行也已加载。"
         } catch {
@@ -165,7 +166,7 @@ final class SettingsViewModel: ObservableObject {
             }
 
             try sessionAPIKeyStore.save(storedValue)
-            apiKeyInput = ""
+            apiKeyInput = storedValue
             apiKeyAvailability = .sessionLoaded
             apiKeyStatusText = "已从本机安全存储读取 API Key，本次运行可直接使用。"
         } catch {
@@ -184,10 +185,9 @@ final class SettingsViewModel: ObservableObject {
     }
 
     func refreshAPIKeyStatus() {
-        apiKeyInput = ""
-
         if let environmentValue = environmentProvider()["DASHSCOPE_API_KEY"]?.trimmingCharacters(in: .whitespacesAndNewlines),
            !environmentValue.isEmpty {
+            apiKeyInput = environmentValue
             apiKeyAvailability = .environmentProvided
             apiKeyStatusText = "当前由环境变量提供 API Key，无需读取钥匙串。"
             return
@@ -196,12 +196,19 @@ final class SettingsViewModel: ObservableObject {
         do {
             let sessionValue = try sessionAPIKeyStore.load().trimmingCharacters(in: .whitespacesAndNewlines)
             if !sessionValue.isEmpty {
+                apiKeyInput = sessionValue
                 apiKeyAvailability = .sessionLoaded
                 apiKeyStatusText = "本次运行已加载 API Key。默认不会自动读取钥匙串。"
                 return
             }
         } catch {
             // Session cache is intentionally optional.
+        }
+
+        if persistentAPIKeyStore.hasStoredKey() {
+            apiKeyAvailability = .persistedButNotLoaded
+            apiKeyStatusText = "本机安全存储中已保存 API Key，但当前会话未加载。"
+            return
         }
 
         apiKeyAvailability = .unavailable

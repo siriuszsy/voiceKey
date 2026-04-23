@@ -24,6 +24,7 @@ enum ASRMode: String, Codable, CaseIterable, Sendable {
 }
 
 struct AppSettings: Codable, Sendable, Equatable {
+    var hasCompletedOnboarding: Bool
     var triggerKey: TriggerKey
     var translationTriggerKey: TriggerKey
     var microphoneDeviceID: String
@@ -36,6 +37,7 @@ struct AppSettings: Codable, Sendable, Equatable {
     var translationTargetLanguage: String
 
     enum CodingKeys: String, CodingKey {
+        case hasCompletedOnboarding
         case triggerKey
         case translationTriggerKey
         case microphoneDeviceID
@@ -49,6 +51,7 @@ struct AppSettings: Codable, Sendable, Equatable {
     }
 
     init(
+        hasCompletedOnboarding: Bool,
         triggerKey: TriggerKey,
         translationTriggerKey: TriggerKey,
         microphoneDeviceID: String,
@@ -60,6 +63,7 @@ struct AppSettings: Codable, Sendable, Equatable {
         translationSourceLanguage: String,
         translationTargetLanguage: String
     ) {
+        self.hasCompletedOnboarding = hasCompletedOnboarding
         self.triggerKey = AppSettings.normalizedTriggerKey(triggerKey)
         self.translationTriggerKey = AppSettings.normalizedTranslationTriggerKey(translationTriggerKey)
         self.microphoneDeviceID = microphoneDeviceID
@@ -74,6 +78,7 @@ struct AppSettings: Codable, Sendable, Equatable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? false
         triggerKey = AppSettings.normalizedTriggerKey(
             try container.decodeIfPresent(TriggerKey.self, forKey: .triggerKey)
         )
@@ -136,6 +141,7 @@ struct AppSettings: Codable, Sendable, Equatable {
     }
 
     static let `default` = AppSettings(
+        hasCompletedOnboarding: false,
         triggerKey: .fn,
         translationTriggerKey: .fnControl,
         microphoneDeviceID: "system-default",

@@ -5,15 +5,21 @@ final class MenuBarController {
     private let statusItem: NSStatusItem
     private let environment: AppEnvironment
     private let menuBuilder = MenuContentBuilder()
+    private let onboardingActionTarget: ClosureMenuAction
     private let settingsActionTarget: ClosureMenuAction
     private let insertionProbeActionTarget: ClosureMenuAction
+    private var onboardingWindowController: OnboardingWindowController?
     private var settingsWindowController: SettingsWindowController?
 
     init(environment: AppEnvironment) {
         self.environment = environment
+        self.onboardingActionTarget = ClosureMenuAction(targetAction: {})
         self.settingsActionTarget = ClosureMenuAction(targetAction: {})
         self.insertionProbeActionTarget = ClosureMenuAction(targetAction: {})
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        self.onboardingActionTarget.replaceAction { [weak self] in
+            self?.openOnboarding()
+        }
         self.settingsActionTarget.replaceAction { [weak self] in
             self?.openSettings()
         }
@@ -28,6 +34,31 @@ final class MenuBarController {
         refreshMenu()
 
         environment.hudController.render(.idle)
+    }
+
+    func openOnboarding() {
+        let controller = onboardingWindowController ?? OnboardingWindowController(
+            rootView: OnboardingView(
+                viewModel: OnboardingViewModel(
+                    settingsStore: environment.settingsStore,
+                    sessionAPIKeyStore: environment.sessionAPIKeyStore,
+                    persistentAPIKeyStore: environment.persistentAPIKeyStore,
+                    permissionService: environment.permissionService,
+                    fixedTextInsertionProbe: environment.fixedTextInsertionProbe,
+                    onFinish: { [weak self] in
+                        self?.refreshMenu()
+                        self?.onboardingWindowController?.close()
+                        self?.onboardingWindowController = nil
+                        self?.openSettings()
+                    }
+                )
+            )
+        )
+        onboardingWindowController = controller
+        NSApp.activate(ignoringOtherApps: true)
+        controller.showWindow(nil)
+        controller.window?.makeKeyAndOrderFront(nil)
+        controller.window?.orderFrontRegardless()
     }
 
     func openSettings() {
@@ -69,6 +100,7 @@ final class MenuBarController {
         let settings = (try? environment.settingsStore.load()) ?? .default
         statusItem.menu = menuBuilder.buildMenu(
             settings: settings,
+            onboardingTarget: onboardingActionTarget,
             settingsTarget: settingsActionTarget,
             insertionProbeTarget: insertionProbeActionTarget
         )

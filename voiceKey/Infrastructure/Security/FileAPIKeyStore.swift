@@ -20,4 +20,16 @@ final class FileAPIKeyStore: APIKeyStore {
         try String(contentsOf: fileURL, encoding: .utf8)
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    func hasStoredKey() -> Bool {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            return false
+        }
+
+        guard let data = try? Data(contentsOf: fileURL) else {
+            return false
+        }
+
+        return !data.isEmpty
+    }
 }
