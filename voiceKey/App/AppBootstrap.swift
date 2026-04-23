@@ -30,7 +30,7 @@ final class AppBootstrap {
         )
         let contextInspector: ContextInspector
         let textInserter: TextInserter
-#if DEBUG
+#if DEBUG || GITHUB_DIRECT_RELEASE
         contextInspector = AXContextInspector(appResolver: FrontmostAppResolver())
         textInserter = AccessibilityAwareTextInserter(
             permissionService: permissionService,

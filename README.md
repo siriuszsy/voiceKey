@@ -6,13 +6,13 @@
 
 <p align="center">一个面向 macOS 的语音输入工具。</p>
 
-> 当前已提供下载：前往 [GitHub Releases](https://github.com/siriuszsy/voiceKey/releases) 下载最新的 `voiceKey-1.0.4-macos.dmg`。如果你更习惯压缩包，也可以下载 `voiceKey-1.0.4-macos.zip`。
+> 当前已提供下载：前往 [GitHub Releases](https://github.com/siriuszsy/voiceKey/releases) 下载最新的 `voiceKey-1.0.5-macos.dmg`。如果你更习惯压缩包，也可以下载 `voiceKey-1.0.5-macos.zip`。
 
 目标很简单：
 
 `按住说话 -> 松开 -> 语音转文字 -> 文本整理 -> 自动写回当前光标`
 
-从 `1.0.4` 开始，这个仓库同时提供：
+从 `1.0.5` 开始，这个仓库同时提供：
 
 - 源码
 - GitHub Releases 里的 macOS 编译产物
@@ -34,7 +34,7 @@
 - [内部详细设计图](./docs/internal-design.md)
 - [类图](./docs/class-diagram.md)
 
-## 1.0.4 功能
+## 1.0.5 功能
 
 - 全局触发录音与翻译
   当前版本默认使用 `Fn` 做听写，`Fn + Control` 做翻译，`Fn + Shift` 作为备选
