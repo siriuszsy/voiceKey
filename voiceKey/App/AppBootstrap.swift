@@ -11,10 +11,11 @@ final class AppBootstrap {
             settings.cleanupEnabled = true
             try? settingsStore.save(settings)
         }
-        let apiKeyStore = ResilientAPIKeyStore(
+        let persistentAPIKeyStore = ResilientAPIKeyStore(
             primary: KeychainAPIKeyStore(service: BuildInfo.bundleIdentifier),
             fallback: FileAPIKeyStore(fileURL: paths.apiKeyFallbackURL)
         )
+        let sessionAPIKeyStore = SessionAPIKeyStore()
         let permissionService = SystemPermissionService()
         let sessionLogStore = JSONLSessionLogStore(paths: paths)
         let httpClient = URLSessionHTTPClient()
@@ -44,8 +45,8 @@ final class AppBootstrap {
         textInserter = ClipboardTextInserter()
 #endif
         let promptBuilder = CleanupPromptBuilder()
-        let offlineASRService = AliyunASRService(httpClient: httpClient, apiKeyStore: apiKeyStore)
-        let realtimeASRService = AliyunRealtimeASRService(apiKeyStore: apiKeyStore)
+        let offlineASRService = AliyunASRService(httpClient: httpClient, apiKeyStore: sessionAPIKeyStore)
+        let realtimeASRService = AliyunRealtimeASRService(apiKeyStore: sessionAPIKeyStore)
         let asrService = SelectableASRService(
             settingsStore: settingsStore,
             offlineService: offlineASRService,
@@ -53,11 +54,11 @@ final class AppBootstrap {
         )
         let translationService = AliyunTranslationService(
             httpClient: httpClient,
-            apiKeyStore: apiKeyStore
+            apiKeyStore: sessionAPIKeyStore
         )
         let cleanupService = AliyunCleanupService(
             httpClient: httpClient,
-            apiKeyStore: apiKeyStore,
+            apiKeyStore: sessionAPIKeyStore,
             settingsStore: settingsStore,
             promptBuilder: promptBuilder
         )
@@ -89,7 +90,8 @@ final class AppBootstrap {
 
         return AppEnvironment(
             settingsStore: settingsStore,
-            apiKeyStore: apiKeyStore,
+            sessionAPIKeyStore: sessionAPIKeyStore,
+            persistentAPIKeyStore: persistentAPIKeyStore,
             permissionService: permissionService,
             sessionLogStore: sessionLogStore,
             triggerEngine: triggerEngine,

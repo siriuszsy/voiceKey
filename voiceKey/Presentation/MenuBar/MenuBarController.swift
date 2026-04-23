@@ -35,7 +35,8 @@ final class MenuBarController {
             rootView: SettingsView(
                 viewModel: SettingsViewModel(
                     settingsStore: environment.settingsStore,
-                    apiKeyStore: environment.apiKeyStore,
+                    sessionAPIKeyStore: environment.sessionAPIKeyStore,
+                    persistentAPIKeyStore: environment.persistentAPIKeyStore,
                     permissionService: environment.permissionService,
                     applySettings: { [weak self, weak environment] previousSettings, settings in
                         if (previousSettings.triggerKey != settings.triggerKey

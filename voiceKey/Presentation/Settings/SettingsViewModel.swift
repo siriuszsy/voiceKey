@@ -1,6 +1,12 @@
 import Combine
 import Foundation
 
+enum APIKeyAvailability: Equatable {
+    case unavailable
+    case sessionLoaded
+    case environmentProvided
+}
+
 @MainActor
 final class SettingsViewModel: ObservableObject {
     @Published var settings: AppSettings = .default
@@ -13,22 +19,29 @@ final class SettingsViewModel: ObservableObject {
     @Published private(set) var setupMessage: String?
     @Published private(set) var saveMessage: String?
     @Published private(set) var apiKeyStatusText: String = "未配置"
+    @Published private(set) var apiKeyAvailability: APIKeyAvailability = .unavailable
 
     private let settingsStore: SettingsStore
-    private let apiKeyStore: APIKeyStore
+    private let sessionAPIKeyStore: APIKeyStore
+    private let persistentAPIKeyStore: APIKeyStore
     private let permissionService: PermissionService
     private let applySettings: ((AppSettings, AppSettings) throws -> Void)?
+    private let environmentProvider: () -> [String: String]
 
     init(
         settingsStore: SettingsStore,
-        apiKeyStore: APIKeyStore,
+        sessionAPIKeyStore: APIKeyStore,
+        persistentAPIKeyStore: APIKeyStore,
         permissionService: PermissionService,
-        applySettings: ((AppSettings, AppSettings) throws -> Void)? = nil
+        applySettings: ((AppSettings, AppSettings) throws -> Void)? = nil,
+        environmentProvider: @escaping () -> [String: String] = { ProcessInfo.processInfo.environment }
     ) {
         self.settingsStore = settingsStore
-        self.apiKeyStore = apiKeyStore
+        self.sessionAPIKeyStore = sessionAPIKeyStore
+        self.persistentAPIKeyStore = persistentAPIKeyStore
         self.permissionService = permissionService
         self.applySettings = applySettings
+        self.environmentProvider = environmentProvider
         self.settings = (try? settingsStore.load()) ?? .default
         self.permissionStatus = permissionService.currentStatus()
         refreshAPIKeyStatus()
@@ -105,7 +118,7 @@ final class SettingsViewModel: ObservableObject {
         }
     }
 
-    func saveAPIKey() {
+    func useAPIKeyForCurrentSession() {
         let trimmed = apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             apiKeyStatusText = "请输入百炼 API Key。"
@@ -113,11 +126,51 @@ final class SettingsViewModel: ObservableObject {
         }
 
         do {
-            try apiKeyStore.save(trimmed)
+            try sessionAPIKeyStore.save(trimmed)
             apiKeyInput = ""
-            refreshAPIKeyStatus()
+            apiKeyAvailability = .sessionLoaded
+            apiKeyStatusText = "本次运行已加载 API Key。退出应用后需要重新粘贴或手动读取。"
         } catch {
+            apiKeyAvailability = .unavailable
+            apiKeyStatusText = "API Key 加载失败：\(error.localizedDescription)"
+        }
+    }
+
+    func saveAPIKeyToPersistentStore() {
+        let trimmed = apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            apiKeyStatusText = "请输入百炼 API Key。"
+            return
+        }
+
+        do {
+            try persistentAPIKeyStore.save(trimmed)
+            try sessionAPIKeyStore.save(trimmed)
+            apiKeyInput = ""
+            apiKeyAvailability = .sessionLoaded
+            apiKeyStatusText = "API Key 已存入本机安全存储，本次运行也已加载。"
+        } catch {
+            apiKeyAvailability = .unavailable
             apiKeyStatusText = "API Key 保存失败：\(error.localizedDescription)"
+        }
+    }
+
+    func loadSavedAPIKeyIntoCurrentSession() {
+        do {
+            let storedValue = try persistentAPIKeyStore.load().trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !storedValue.isEmpty else {
+                apiKeyAvailability = .unavailable
+                apiKeyStatusText = "没有找到已保存的 API Key。"
+                return
+            }
+
+            try sessionAPIKeyStore.save(storedValue)
+            apiKeyInput = ""
+            apiKeyAvailability = .sessionLoaded
+            apiKeyStatusText = "已从本机安全存储读取 API Key，本次运行可直接使用。"
+        } catch {
+            apiKeyAvailability = .unavailable
+            apiKeyStatusText = "读取已保存的 API Key 失败：\(error.localizedDescription)"
         }
     }
 
@@ -131,19 +184,28 @@ final class SettingsViewModel: ObservableObject {
     }
 
     func refreshAPIKeyStatus() {
+        apiKeyInput = ""
+
+        if let environmentValue = environmentProvider()["DASHSCOPE_API_KEY"]?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !environmentValue.isEmpty {
+            apiKeyAvailability = .environmentProvided
+            apiKeyStatusText = "当前由环境变量提供 API Key，无需读取钥匙串。"
+            return
+        }
+
         do {
-            let key = try apiKeyStore.load()
-            if key.isEmpty {
-                apiKeyInput = ""
-                apiKeyStatusText = "未配置"
-            } else {
-                apiKeyInput = key
-                apiKeyStatusText = "API Key 已保存到本地"
+            let sessionValue = try sessionAPIKeyStore.load().trimmingCharacters(in: .whitespacesAndNewlines)
+            if !sessionValue.isEmpty {
+                apiKeyAvailability = .sessionLoaded
+                apiKeyStatusText = "本次运行已加载 API Key。默认不会自动读取钥匙串。"
+                return
             }
         } catch {
-            apiKeyInput = ""
-            apiKeyStatusText = "未配置"
+            // Session cache is intentionally optional.
         }
+
+        apiKeyAvailability = .unavailable
+        apiKeyStatusText = "当前会话未加载。默认不会自动读取钥匙串。"
     }
 
     func requestAccessibility() {

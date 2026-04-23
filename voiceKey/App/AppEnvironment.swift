@@ -2,7 +2,8 @@ import Foundation
 
 final class AppEnvironment {
     let settingsStore: SettingsStore
-    let apiKeyStore: APIKeyStore
+    let sessionAPIKeyStore: APIKeyStore
+    let persistentAPIKeyStore: APIKeyStore
     let permissionService: PermissionService
     let sessionLogStore: SessionLogStore
     let triggerEngine: TriggerEngine
@@ -17,7 +18,8 @@ final class AppEnvironment {
 
     init(
         settingsStore: SettingsStore,
-        apiKeyStore: APIKeyStore,
+        sessionAPIKeyStore: APIKeyStore,
+        persistentAPIKeyStore: APIKeyStore,
         permissionService: PermissionService,
         sessionLogStore: SessionLogStore,
         triggerEngine: TriggerEngine,
@@ -31,7 +33,8 @@ final class AppEnvironment {
         fixedTextInsertionProbe: FixedTextInsertionProbe
     ) {
         self.settingsStore = settingsStore
-        self.apiKeyStore = apiKeyStore
+        self.sessionAPIKeyStore = sessionAPIKeyStore
+        self.persistentAPIKeyStore = persistentAPIKeyStore
         self.permissionService = permissionService
         self.sessionLogStore = sessionLogStore
         self.triggerEngine = triggerEngine

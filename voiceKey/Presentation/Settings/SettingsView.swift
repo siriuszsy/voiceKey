@@ -187,19 +187,48 @@ struct SettingsView: View {
                 SecureField("输入 sk- 开头的 API Key", text: $viewModel.apiKeyInput)
                     .textFieldStyle(.roundedBorder)
 
-                HStack(spacing: 10) {
-                    Button("保存 API Key") {
-                        viewModel.saveAPIKey()
-                    }
-                    .buttonStyle(.borderedProminent)
+                HStack(alignment: .center, spacing: 12) {
+                    HStack(spacing: 10) {
+                        Image(systemName: apiKeyIconName)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(apiKeyAccentColor)
+                            .frame(width: 26, height: 26)
+                            .background(apiKeyAccentColor.opacity(0.14), in: Circle())
 
-                    Button("刷新状态") {
-                        viewModel.refreshAPIKeyStatus()
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("安全读取默认关闭")
+                                .font(.subheadline.weight(.semibold))
+
+                            Text(viewModel.apiKeyStatusText)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    .buttonStyle(.bordered)
+
+                    Spacer()
+                }
+                .padding(14)
+                .background(Color.white.opacity(0.52), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                HStack(spacing: 8) {
+                    apiKeyActionChip(
+                        title: "本次使用",
+                        systemImage: "bolt.badge.clock",
+                        action: viewModel.useAPIKeyForCurrentSession
+                    )
+                    apiKeyActionChip(
+                        title: "存入安全存储",
+                        systemImage: "lock",
+                        action: viewModel.saveAPIKeyToPersistentStore
+                    )
+                    apiKeyActionChip(
+                        title: "读取已保存 Key",
+                        systemImage: "lock.open",
+                        action: viewModel.loadSavedAPIKeyIntoCurrentSession
+                    )
                 }
 
-                inlineNote(viewModel.apiKeyStatusText)
+                inlineNote("默认不会自动读取你的钥匙串。只有你手动点“读取已保存 Key”时，系统才可能要求 Touch ID 或密码。")
             }
             .padding(16)
             .background(cardFill, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -528,6 +557,25 @@ struct SettingsView: View {
             .background(Color.white.opacity(0.46), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
+    private func apiKeyActionChip(
+        title: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.footnote.weight(.semibold))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+        }
+        .buttonStyle(.plain)
+        .background(Color.white.opacity(0.7), in: Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.black.opacity(0.08), lineWidth: 1)
+        )
+    }
+
     private func permissionColor(for state: PermissionState) -> Color {
         switch state {
         case .granted:
@@ -540,11 +588,38 @@ struct SettingsView: View {
     }
 
     private var apiKeyReady: Bool {
-        viewModel.apiKeyStatusText.contains("已保存")
+        switch viewModel.apiKeyAvailability {
+        case .sessionLoaded, .environmentProvided:
+            return true
+        case .unavailable:
+            return false
+        }
     }
 
     private var apiKeySummary: String {
-        apiKeyReady ? "已配置" : "未配置"
+        switch viewModel.apiKeyAvailability {
+        case .environmentProvided:
+            return "环境变量"
+        case .sessionLoaded:
+            return "本次可用"
+        case .unavailable:
+            return "未加载"
+        }
+    }
+
+    private var apiKeyIconName: String {
+        switch viewModel.apiKeyAvailability {
+        case .environmentProvided:
+            return "lock.shield.fill"
+        case .sessionLoaded:
+            return "lock.open.fill"
+        case .unavailable:
+            return "lock.fill"
+        }
+    }
+
+    private var apiKeyAccentColor: Color {
+        apiKeyReady ? Color.green : Color.orange
     }
 
     private var cardFill: Color {
