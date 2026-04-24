@@ -4,6 +4,7 @@ struct OnboardingView: View {
     @ObservedObject var viewModel: OnboardingViewModel
 
     @State private var testInput = ""
+    @State private var showingAPIKeyHelp = false
     @FocusState private var testFieldFocused: Bool
 
     private let steps = OnboardingStep.allCases
@@ -173,31 +174,79 @@ struct OnboardingView: View {
 
     private var apiKeyStep: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 10) {
-                modeButton(title: "我已经有 Key", selected: viewModel.apiKeyMode == .haveKey) {
-                    viewModel.chooseHaveKey()
+            card {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("连接百炼 API Key")
+                        .font(.headline)
+
+                    Text("先本次使用，跑通后再决定是否保存。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    HStack {
+                        Text("当前状态")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(viewModel.apiKeyStatusText)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.white.opacity(0.7), in: Capsule())
+                    }
+
+                    SecureField("输入 sk- 开头的 API Key", text: $viewModel.apiKeyInput)
+                        .textFieldStyle(.roundedBorder)
+
+                    HStack(spacing: 10) {
+                        Button("继续") {
+                            viewModel.useAPIKeyForCurrentSession()
+                        }
+                        .buttonStyle(OnboardingPrimaryButtonStyle())
+
+                        Button("读取已保存 Key") {
+                            viewModel.loadSavedAPIKeyIntoCurrentSession()
+                        }
+                        .buttonStyle(OnboardingSecondaryButtonStyle())
+                    }
+
+                    Button("顺手存入安全存储") {
+                        viewModel.saveAPIKeyToPersistentStore()
+                    }
+                    .buttonStyle(OnboardingGhostButtonStyle())
+
+                    DisclosureGroup(isExpanded: $showingAPIKeyHelp) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            applyStep(title: "1. 登录百炼控制台", body: "先完成账号登录和实名认证。")
+                            applyStep(title: "2. 切到华北 2（北京）", body: "当前 app 默认对接北京节点，这一步必须明显。")
+                            applyStep(title: "3. 创建 API Key", body: "建议先用默认业务空间 + 全部权限。")
+                            applyStep(title: "4. 开启免费额度保护", body: "把“会不会误扣费”的担心提前化解掉。")
+
+                            HStack(spacing: 10) {
+                                Button("打开百炼控制台") {
+                                    viewModel.openBailianConsole()
+                                }
+                                .buttonStyle(OnboardingSecondaryButtonStyle())
+
+                                Button("查看 API Key 文档") {
+                                    viewModel.openGetAPIKeyDocs()
+                                }
+                                .buttonStyle(OnboardingGhostButtonStyle())
+
+                                Button("免费额度说明") {
+                                    viewModel.openFreeQuotaDocs()
+                                }
+                                .buttonStyle(OnboardingGhostButtonStyle())
+                            }
+                        }
+                        .padding(.top, 8)
+                    } label: {
+                        Text("还没有 Key？查看申请步骤")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color(red: 0.8, green: 0.36, blue: 0.14))
+                    }
+                    .tint(Color(red: 0.8, green: 0.36, blue: 0.14))
                 }
-                modeButton(title: "我还没有 Key", selected: viewModel.apiKeyMode == .needKey) {
-                    viewModel.chooseNeedKey()
-                }
-            }
-
-            if viewModel.apiKeyMode == .haveKey {
-                inputCard
-            } else {
-                applyKeyCard
-            }
-
-            VStack(alignment: .leading, spacing: 12) {
-                overviewCard(
-                    title: "为什么放在同一步",
-                    body: "没有 Key 的用户不该先面对一个空输入框；先给申请路径，再回到同一页输入，更顺。"
-                )
-
-                overviewCard(
-                    title: "当前原则",
-                    body: "默认主路径是“本次使用”。不要自动读取钥匙串，也不要一开始逼用户理解长期保存策略。"
-                )
             }
         }
     }
@@ -225,80 +274,6 @@ struct OnboardingView: View {
                     viewModel.move(to: .apiKey)
                 }
                 .buttonStyle(OnboardingSecondaryButtonStyle())
-            }
-        }
-    }
-
-    private var inputCard: some View {
-        card {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("连接百炼 API Key")
-                    .font(.headline)
-                Text(viewModel.apiKeyStatusText)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                SecureField("输入 sk- 开头的 API Key", text: $viewModel.apiKeyInput)
-                    .textFieldStyle(.roundedBorder)
-
-                HStack(spacing: 10) {
-                    Button("本次使用") {
-                        viewModel.useAPIKeyForCurrentSession()
-                    }
-                    .buttonStyle(OnboardingPrimaryButtonStyle())
-
-                    Button("读取已保存 Key") {
-                        viewModel.loadSavedAPIKeyIntoCurrentSession()
-                    }
-                    .buttonStyle(OnboardingSecondaryButtonStyle())
-                }
-
-                Button("顺手存入安全存储") {
-                    viewModel.saveAPIKeyToPersistentStore()
-                }
-                .buttonStyle(OnboardingGhostButtonStyle())
-
-                Text("默认不会自动读取你的钥匙串。只有你手动点“读取已保存 Key”时，系统才可能要求 Touch ID 或密码。")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private var applyKeyCard: some View {
-        card {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("先申请你的百炼 API Key")
-                    .font(.headline)
-
-                applyStep(title: "1. 登录百炼控制台", body: "先完成账号登录和实名认证。")
-                applyStep(title: "2. 切到华北 2（北京）", body: "当前 app 默认对接北京节点，这一步必须明显。")
-                applyStep(title: "3. 创建 API Key", body: "建议先用默认业务空间 + 全部权限。")
-                applyStep(title: "4. 开启免费额度保护", body: "把“会不会误扣费”的担心提前化解掉。")
-
-                HStack(spacing: 10) {
-                    Button("打开百炼控制台") {
-                        viewModel.openBailianConsole()
-                    }
-                    .buttonStyle(OnboardingPrimaryButtonStyle())
-
-                    Button("查看 API Key 文档") {
-                        viewModel.openGetAPIKeyDocs()
-                    }
-                    .buttonStyle(OnboardingSecondaryButtonStyle())
-                }
-
-                HStack(spacing: 10) {
-                    Button("免费额度说明") {
-                        viewModel.openFreeQuotaDocs()
-                    }
-                    .buttonStyle(OnboardingGhostButtonStyle())
-
-                    Button("我已经拿到 Key 了") {
-                        viewModel.markKeyObtained()
-                    }
-                    .buttonStyle(OnboardingSecondaryButtonStyle())
-                }
             }
         }
     }
@@ -521,18 +496,6 @@ struct OnboardingView: View {
         }
         .padding(16)
         .background(Color.white.opacity(0.66), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-    }
-
-    private func modeButton(title: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Group {
-            if selected {
-                Button(title, action: action)
-                    .buttonStyle(OnboardingPrimaryButtonStyle())
-            } else {
-                Button(title, action: action)
-                    .buttonStyle(OnboardingSecondaryButtonStyle())
-            }
-        }
     }
 
     private var microphonePermissionRow: some View {
