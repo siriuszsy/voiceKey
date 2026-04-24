@@ -214,7 +214,24 @@ struct OnboardingView: View {
             }
             .buttonStyle(OnboardingGhostButtonStyle())
 
-            DisclosureGroup(isExpanded: $showingAPIKeyHelp) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    showingAPIKeyHelp.toggle()
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Text("还没有 Key？查看申请步骤")
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: showingAPIKeyHelp ? "chevron.up" : "chevron.down")
+                        .font(.caption.weight(.semibold))
+                }
+                .foregroundStyle(Color(red: 0.8, green: 0.36, blue: 0.14))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if showingAPIKeyHelp {
                 VStack(alignment: .leading, spacing: 12) {
                     applyStep(title: "1. 登录百炼控制台", body: "先完成账号登录和实名认证。")
                     applyStep(title: "2. 切到华北 2（北京）", body: "当前 app 默认对接北京节点。")
@@ -238,13 +255,8 @@ struct OnboardingView: View {
                         .buttonStyle(OnboardingGhostButtonStyle())
                     }
                 }
-                .padding(.top, 8)
-            } label: {
-                Text("还没有 Key？查看申请步骤")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color(red: 0.8, green: 0.36, blue: 0.14))
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
-            .tint(Color(red: 0.8, green: 0.36, blue: 0.14))
         }
     }
 
