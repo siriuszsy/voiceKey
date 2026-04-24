@@ -56,7 +56,7 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("首次使用引导")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(.secondary)
+                    .foregroundStyle(.secondary)
                 Text("先完成第一次成功输入，再谈更多设置。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -253,22 +253,21 @@ struct OnboardingView: View {
 
     private var permissionsStep: some View {
         VStack(alignment: .leading, spacing: 18) {
-            infoCallout(
-                title: "这里把两类权限一起准备好",
-                copy: "麦克风决定能不能录音，辅助功能决定第一次测试能不能直接落到光标。但它们的动作和提示必须分清。",
-                tint: Color(red: 0.71, green: 0.49, blue: 0.11)
-            )
-
             VStack(alignment: .leading, spacing: 14) {
                 microphonePermissionRow
                 accessibilityPermissionRow
             }
 
+            Text("麦克风决定能不能录音，辅助功能决定能不能直接写回当前光标。不开辅助功能也能继续，但会使用剪贴板回退。")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
             HStack(spacing: 12) {
-                Button("开始直接写入测试") {
+                Button(permissionsContinueTitle) {
                     viewModel.continueToDirectWriteTest()
                 }
                 .buttonStyle(OnboardingPrimaryButtonStyle())
+                .disabled(!viewModel.microphoneReady)
 
                 Button("返回 API Key") {
                     viewModel.move(to: .apiKey)
@@ -280,21 +279,17 @@ struct OnboardingView: View {
 
     private var directWriteStep: some View {
         VStack(alignment: .leading, spacing: 18) {
-            infoCallout(
-                title: "第一次测试就验证完整链路",
-                copy: "先把光标点进下面这个测试框。然后按住 Fn 说一句话，目标是让结果直接落到这个输入框里；如果权限没开，也必须明确知道当前会回退到剪贴板。",
-                tint: viewModel.accessibilityReady ? Color.green : Color.orange
-            )
-
             VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    Text("当前写回模式")
-                        .font(.headline)
-                    Spacer()
-                    Text(viewModel.writeModeLabel)
+                HStack(spacing: 10) {
+                    Text("当前模式")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(viewModel.accessibilityReady ? Color.green : Color.orange)
+                        .foregroundStyle(.secondary)
+                    modeBadge
                 }
+
+                Text("把光标点进下面，再按 Fn 说一句话。目标不是只验证能不能识别，而是直接确认结果能不能落到当前输入框。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
 
                 TextEditor(text: $testInput)
                     .focused($testFieldFocused)
@@ -307,29 +302,21 @@ struct OnboardingView: View {
                             .stroke(Color.black.opacity(0.08), lineWidth: 1)
                     )
 
-                HStack(spacing: 10) {
-                    Button("点这里聚焦测试框") {
-                        testFieldFocused = true
-                    }
-                    .buttonStyle(OnboardingSecondaryButtonStyle())
-
-                    Button("写入测试文本") {
-                        testFieldFocused = true
-                        viewModel.runWriteTest()
-                    }
-                    .buttonStyle(OnboardingPrimaryButtonStyle())
-
-                    Button("清空测试框") {
-                        testInput = ""
-                        testFieldFocused = true
-                    }
-                    .buttonStyle(OnboardingGhostButtonStyle())
+                Button("写入测试文本") {
+                    testFieldFocused = true
+                    viewModel.runWriteTest()
                 }
+                .buttonStyle(OnboardingPrimaryButtonStyle())
 
                 Text("推荐测试句：今天先测试第一句听写。也可以先点“写入测试文本”验证当前光标写回链路。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+
+            overviewCard(
+                title: "顺手试一下翻译",
+                body: "按住 Fn + Control，可以直接输出翻译结果。它不是首次引导的必经步骤，但适合在第一次成功输入后顺手试一下。"
+            )
 
             HStack(spacing: 12) {
                 Button("完成首次引导") {
@@ -401,6 +388,22 @@ struct OnboardingView: View {
         viewModel.currentStep == .welcome ? .center : .leading
     }
 
+    private var permissionsContinueTitle: String {
+        if !viewModel.microphoneReady {
+            return "先完成麦克风授权"
+        }
+        return viewModel.accessibilityReady ? "开始直接写入测试" : "继续测试"
+    }
+
+    private var modeBadge: some View {
+        Text(viewModel.writeModeLabel)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(viewModel.accessibilityReady ? Color.green : Color.orange)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.white.opacity(0.7), in: Capsule())
+    }
+
     private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
             .padding(18)
@@ -409,18 +412,6 @@ struct OnboardingView: View {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .stroke(Color.black.opacity(0.06), lineWidth: 1)
             )
-    }
-
-    private func overviewCard(title: String, body: String) -> some View {
-        card {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(title)
-                    .font(.headline)
-                Text(body)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
     }
 
     private func infoCallout(title: String, copy: String, tint: Color) -> some View {
@@ -433,6 +424,18 @@ struct OnboardingView: View {
         }
         .padding(16)
         .background(tint.opacity(0.1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func overviewCard(title: String, body: String) -> some View {
+        card {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.headline)
+                Text(body)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     private func applyStep(title: String, body: String) -> some View {
