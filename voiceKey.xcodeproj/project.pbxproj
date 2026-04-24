@@ -55,6 +55,7 @@
 		7AA029A1E3DAA7B17018D41A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA518F8E3BF0A91326204262 /* SettingsView.swift */; };
 		7C1A7AB9DF0FB1FBC3381C5B /* AliyunCleanupResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C16F72AC071195EA7A13647 /* AliyunCleanupResponse.swift */; };
 		80BF4BE14B22184E491D3C04 /* FakeASRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 449B44FFD6FA2F8BE3EF1111 /* FakeASRService.swift */; };
+		81682F782CDFBBDC7C0BE3A9 /* OnboardingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B11852A04160A89BABCD99 /* OnboardingViewModelTests.swift */; };
 		81AABF7F9A4909AB822EC316 /* VoiceKeyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D81F6039354BF129D197E6 /* VoiceKeyApp.swift */; };
 		82D558EC63407F6EA1243EB7 /* CompositeTextInserter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FA5E2A772F68C0BAC10237 /* CompositeTextInserter.swift */; };
 		85E2FA8FF5843BD72AD9299D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A35D5542E7185BBCAF61DA59 /* AppDelegate.swift */; };
@@ -230,6 +231,7 @@
 		D445D5E88D70F2ECDC3106A6 /* TemporaryAudioFileWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryAudioFileWriter.swift; sourceTree = "<group>"; };
 		D6EC4A86A9D20466054D72A4 /* Signing.local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.local.xcconfig; sourceTree = "<group>"; };
 		D71054D02C5D77076B7390E0 /* PCMWaveFileRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PCMWaveFileRecorder.swift; sourceTree = "<group>"; };
+		D8B11852A04160A89BABCD99 /* OnboardingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModelTests.swift; sourceTree = "<group>"; };
 		DB74A260E1F143B418D1759A /* ASRTranscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASRTranscript.swift; sourceTree = "<group>"; };
 		E02526E66016BED2D0765432 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		E0DE122C46B0F078320B9BC5 /* SyntheticPasteExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntheticPasteExecutor.swift; sourceTree = "<group>"; };
@@ -349,6 +351,7 @@
 		3E3AFDFB6E3C8A8F4D3D76C0 /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
+				D8B11852A04160A89BABCD99 /* OnboardingViewModelTests.swift */,
 				576C8F667268CB382776422F /* SettingsViewModelTests.swift */,
 			);
 			path = Presentation;
@@ -762,6 +765,7 @@
 				AFC9250FF7DDCBC053FFC49D /* FakeTriggerEngine.swift in Sources */,
 				5ED603AFF496643BBF6C9798 /* JSONSettingsStoreTests.swift in Sources */,
 				384ECA0D969F4DC762491025 /* ModifierChordTriggerEngineTests.swift in Sources */,
+				81682F782CDFBBDC7C0BE3A9 /* OnboardingViewModelTests.swift in Sources */,
 				DC4C2E827F93B14D05737126 /* SelectableASRServiceTests.swift in Sources */,
 				9C70C36E2426AD1CCDFA60E9 /* SettingsViewModelTests.swift in Sources */,
 				42EF7F84584441DAC5715600 /* SpyHUDController.swift in Sources */,
@@ -968,7 +972,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -981,7 +985,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.6;
+				MARKETING_VERSION = 1.0.7;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.littlerobot.voicekey;
@@ -1048,7 +1052,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1061,7 +1065,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.6;
+				MARKETING_VERSION = 1.0.7;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.littlerobot.voicekey;
@@ -1125,7 +1129,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -1144,7 +1148,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.6;
+				MARKETING_VERSION = 1.0.7;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

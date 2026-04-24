@@ -70,7 +70,7 @@ private final class OnboardingSpySettingsStore: SettingsStore {
 }
 
 private final class OnboardingSpyAPIKeyStore: APIKeyStore {
-    private let storedValue: String?
+    private var storedValue: String?
     private(set) var loadCallCount: Int = 0
 
     init(storedValue: String? = nil) {
@@ -78,7 +78,7 @@ private final class OnboardingSpyAPIKeyStore: APIKeyStore {
     }
 
     func save(_ key: String) throws {
-        _ = key
+        storedValue = key
     }
 
     func load() throws -> String {

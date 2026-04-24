@@ -68,10 +68,10 @@ bash scripts/build_github_release.sh
 
 ```text
 dist/
-├── voiceKey-1.0.5-macos.dmg
-├── voiceKey-1.0.5-macos.dmg.sha256
-├── voiceKey-1.0.5-macos.zip
-└── voiceKey-1.0.5-macos.zip.sha256
+├── voiceKey-1.0.7-macos.dmg
+├── voiceKey-1.0.7-macos.dmg.sha256
+├── voiceKey-1.0.7-macos.zip
+└── voiceKey-1.0.7-macos.zip.sha256
 ```
 
 脚本会自动完成：
@@ -93,7 +93,7 @@ dist/
 - `qwen-flash`
 
 API Key 不会写进仓库。  
-运行后在设置页里填入你自己的百炼 `API Key` 即可。`1.0.5` 开始不会自动读取钥匙串，只有用户手动点 `读取已保存 Key` 时才会访问本机安全存储。
+运行后在设置页里填入你自己的百炼 `API Key` 即可。`1.0.7` 这版仍然不会自动读取钥匙串，只有用户手动点 `读取已保存 Key` 时才会访问本机安全存储。
 
 普通用户请优先参考：
 

@@ -6,7 +6,7 @@
 
 <p align="center">一个面向 macOS 的语音输入工具。</p>
 
-> 当前已提供下载：前往 [GitHub Releases](https://github.com/siriuszsy/voiceKey/releases) 下载最新的 `voiceKey-1.0.5-macos.dmg`。如果你更习惯压缩包，也可以下载 `voiceKey-1.0.5-macos.zip`。
+> 当前已提供下载：前往 [GitHub Releases](https://github.com/siriuszsy/voiceKey/releases) 下载最新的 `voiceKey-1.0.7-macos.dmg`。如果你更习惯压缩包，也可以下载 `voiceKey-1.0.7-macos.zip`。
 
 目标很简单：
 
@@ -34,7 +34,7 @@
 - [内部详细设计图](./docs/internal-design.md)
 - [类图](./docs/class-diagram.md)
 
-## 1.0.5 功能
+## 1.0.7 功能
 
 - 全局触发录音与翻译
   当前版本默认使用 `Fn` 做听写，`Fn + Control` 做翻译，`Fn + Shift` 作为备选

@@ -1,6 +1,6 @@
-# 音键 1.0.5 使用手册
+# 音键 1.0.7 使用手册
 
-最后更新：2026-04-21
+最后更新：2026-04-24
 
 ## 1. 这是什么
 
@@ -18,7 +18,7 @@
 ## 2. 下载与安装
 
 1. 打开 [GitHub Releases](https://github.com/siriuszsy/voiceKey/releases)。
-2. 优先下载 `voiceKey-1.0.5-macos.dmg`。如果你更习惯压缩包，也可以下载 `voiceKey-1.0.5-macos.zip`。
+2. 优先下载 `voiceKey-1.0.7-macos.dmg`。如果你更习惯压缩包，也可以下载 `voiceKey-1.0.7-macos.zip`。
 3. 如果你下载的是 `DMG`，双击打开后把 `voiceKey.app` 拖到 `Applications`。
 4. 如果你下载的是 `ZIP`，先解压，再把 `voiceKey.app` 拖到 `Applications`。
 5. 首次启动时，如果 macOS 仍提示应用来自互联网，先右键 `voiceKey.app`，选择“打开”。
