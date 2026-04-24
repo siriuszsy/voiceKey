@@ -53,10 +53,11 @@ struct OnboardingView: View {
     private var topBar: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
-                Text(BuildInfo.displayName)
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                Text("首次使用向导")
-                    .font(.subheadline.weight(.medium))
+                Text("首次使用引导")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundStyle(.secondary)
+                Text("先完成第一次成功输入，再谈更多设置。")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
@@ -110,19 +111,26 @@ struct OnboardingView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: headerAlignment, spacing: viewModel.currentStep == .welcome ? 12 : 10) {
             Text(viewModel.currentStep.progressLabel)
                 .font(.caption.weight(.semibold))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(Color.white.opacity(0.7), in: Capsule())
 
+            if viewModel.currentStep == .welcome {
+                VoiceKeyBrandMark(hero: true)
+                    .padding(.vertical, 4)
+            }
+
             Text(viewModel.currentStep.title)
-                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .font(.system(size: viewModel.currentStep == .welcome ? 38 : 34, weight: .bold, design: .rounded))
+                .multilineTextAlignment(viewModel.currentStep == .welcome ? .center : .leading)
 
             Text(viewModel.currentStep.subtitle)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(viewModel.currentStep == .welcome ? .center : .leading)
 
             if let guideMessage = viewModel.guideMessage {
                 infoCallout(
@@ -132,6 +140,7 @@ struct OnboardingView: View {
                 )
             }
         }
+        .frame(maxWidth: .infinity, alignment: headerFrameAlignment)
     }
 
     private var welcomeStep: some View {
@@ -158,6 +167,7 @@ struct OnboardingView: View {
                 }
                 .buttonStyle(OnboardingSecondaryButtonStyle())
             }
+            .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 
@@ -408,6 +418,14 @@ struct OnboardingView: View {
         .background(Color.white.opacity(0.58), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
+    private var headerAlignment: HorizontalAlignment {
+        viewModel.currentStep == .welcome ? .center : .leading
+    }
+
+    private var headerFrameAlignment: Alignment {
+        viewModel.currentStep == .welcome ? .center : .leading
+    }
+
     private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
             .padding(18)
@@ -567,6 +585,34 @@ struct OnboardingView: View {
                 )
             }
         }
+    }
+}
+
+private struct VoiceKeyBrandMark: View {
+    let hero: Bool
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: hero ? 24 : 16, style: .continuous)
+                .fill(Color.black)
+
+            HStack(alignment: .bottom, spacing: hero ? 10 : 6) {
+                bar(height: hero ? 42 : 26)
+                bar(height: hero ? 54 : 34)
+                bar(height: hero ? 64 : 40)
+                bar(height: hero ? 54 : 34)
+                bar(height: hero ? 42 : 26)
+            }
+            .frame(height: hero ? 72 : 44)
+        }
+        .frame(width: hero ? 220 : 126, height: hero ? 92 : 52)
+        .shadow(color: Color.black.opacity(hero ? 0.14 : 0.08), radius: hero ? 18 : 10, y: hero ? 10 : 6)
+    }
+
+    private func bar(height: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: 999, style: .continuous)
+            .fill(Color.white)
+            .frame(width: hero ? 12 : 7, height: height)
     }
 }
 
