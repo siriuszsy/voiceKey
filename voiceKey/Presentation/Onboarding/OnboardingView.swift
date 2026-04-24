@@ -57,7 +57,7 @@ struct OnboardingView: View {
                 Text("首次使用引导")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
-                Text("先完成第一次成功输入，再谈更多设置。")
+                Text("先把第一次输入跑通。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -146,27 +146,31 @@ struct OnboardingView: View {
 
     private var welcomeStep: some View {
         VStack(alignment: .leading, spacing: 18) {
-            infoCallout(
-                title: "这次只讲 3 件事",
-                copy: "需要百炼 API Key、需要麦克风、辅助功能只影响是否直接写回当前光标。",
-                tint: Color(red: 0.8, green: 0.36, blue: 0.14)
-            )
-
-            overviewCard(
-                title: "这条路径会发生什么",
-                body: "欢迎 -> API Key -> 权限准备 -> 直接写入测试。首次引导的目标是让你在 2 分钟内成功写出第一句话。"
-            )
+            VStack(alignment: .leading, spacing: 14) {
+                welcomeBullet(
+                    title: "需要一个百炼 API Key",
+                    copy: "先连通，再决定要不要保存到本机安全存储。"
+                )
+                welcomeBullet(
+                    title: "需要麦克风权限",
+                    copy: "不开就不能开始录音。"
+                )
+                welcomeBullet(
+                    title: "辅助功能决定写回方式",
+                    copy: "开了直接写回光标；不开就走剪贴板回退。"
+                )
+            }
 
             HStack(spacing: 12) {
-                Button("开始设置") {
-                    viewModel.continueFromWelcome()
-                }
-                .buttonStyle(OnboardingPrimaryButtonStyle())
-
                 Button("稍后配置") {
                     viewModel.finishOnboarding()
                 }
                 .buttonStyle(OnboardingSecondaryButtonStyle())
+
+                Button("开始") {
+                    viewModel.continueFromWelcome()
+                }
+                .buttonStyle(OnboardingPrimaryButtonStyle())
             }
             .frame(maxWidth: .infinity, alignment: .center)
         }
@@ -174,80 +178,73 @@ struct OnboardingView: View {
 
     private var apiKeyStep: some View {
         VStack(alignment: .leading, spacing: 16) {
-            card {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("连接百炼 API Key")
-                        .font(.headline)
+            Text("音键不内置 Key。先本次使用，跑通后再决定是否保存。")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
 
-                    Text("先本次使用，跑通后再决定是否保存。")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            HStack {
+                Text("当前状态")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(viewModel.apiKeyStatusText)
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.7), in: Capsule())
+            }
 
-                    HStack {
-                        Text("当前状态")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(viewModel.apiKeyStatusText)
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.white.opacity(0.7), in: Capsule())
-                    }
+            SecureField("输入 sk- 开头的 API Key", text: $viewModel.apiKeyInput)
+                .textFieldStyle(.roundedBorder)
 
-                    SecureField("输入 sk- 开头的 API Key", text: $viewModel.apiKeyInput)
-                        .textFieldStyle(.roundedBorder)
+            HStack(spacing: 10) {
+                Button("读取已保存 Key") {
+                    viewModel.loadSavedAPIKeyIntoCurrentSession()
+                }
+                .buttonStyle(OnboardingSecondaryButtonStyle())
+
+                Button("继续") {
+                    viewModel.useAPIKeyForCurrentSession()
+                }
+                .buttonStyle(OnboardingPrimaryButtonStyle())
+            }
+
+            Button("顺手存入安全存储") {
+                viewModel.saveAPIKeyToPersistentStore()
+            }
+            .buttonStyle(OnboardingGhostButtonStyle())
+
+            DisclosureGroup(isExpanded: $showingAPIKeyHelp) {
+                VStack(alignment: .leading, spacing: 12) {
+                    applyStep(title: "1. 登录百炼控制台", body: "先完成账号登录和实名认证。")
+                    applyStep(title: "2. 切到华北 2（北京）", body: "当前 app 默认对接北京节点。")
+                    applyStep(title: "3. 创建 API Key", body: "建议先用默认业务空间 + 全部权限。")
+                    applyStep(title: "4. 开启免费额度保护", body: "建议把“免费额度用完即停”打开。")
 
                     HStack(spacing: 10) {
-                        Button("继续") {
-                            viewModel.useAPIKeyForCurrentSession()
-                        }
-                        .buttonStyle(OnboardingPrimaryButtonStyle())
-
-                        Button("读取已保存 Key") {
-                            viewModel.loadSavedAPIKeyIntoCurrentSession()
+                        Button("打开百炼控制台") {
+                            viewModel.openBailianConsole()
                         }
                         .buttonStyle(OnboardingSecondaryButtonStyle())
-                    }
 
-                    Button("顺手存入安全存储") {
-                        viewModel.saveAPIKeyToPersistentStore()
-                    }
-                    .buttonStyle(OnboardingGhostButtonStyle())
-
-                    DisclosureGroup(isExpanded: $showingAPIKeyHelp) {
-                        VStack(alignment: .leading, spacing: 12) {
-                            applyStep(title: "1. 登录百炼控制台", body: "先完成账号登录和实名认证。")
-                            applyStep(title: "2. 切到华北 2（北京）", body: "当前 app 默认对接北京节点，这一步必须明显。")
-                            applyStep(title: "3. 创建 API Key", body: "建议先用默认业务空间 + 全部权限。")
-                            applyStep(title: "4. 开启免费额度保护", body: "把“会不会误扣费”的担心提前化解掉。")
-
-                            HStack(spacing: 10) {
-                                Button("打开百炼控制台") {
-                                    viewModel.openBailianConsole()
-                                }
-                                .buttonStyle(OnboardingSecondaryButtonStyle())
-
-                                Button("查看 API Key 文档") {
-                                    viewModel.openGetAPIKeyDocs()
-                                }
-                                .buttonStyle(OnboardingGhostButtonStyle())
-
-                                Button("免费额度说明") {
-                                    viewModel.openFreeQuotaDocs()
-                                }
-                                .buttonStyle(OnboardingGhostButtonStyle())
-                            }
+                        Button("查看 API Key 文档") {
+                            viewModel.openGetAPIKeyDocs()
                         }
-                        .padding(.top, 8)
-                    } label: {
-                        Text("还没有 Key？查看申请步骤")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Color(red: 0.8, green: 0.36, blue: 0.14))
+                        .buttonStyle(OnboardingGhostButtonStyle())
+
+                        Button("免费额度说明") {
+                            viewModel.openFreeQuotaDocs()
+                        }
+                        .buttonStyle(OnboardingGhostButtonStyle())
                     }
-                    .tint(Color(red: 0.8, green: 0.36, blue: 0.14))
                 }
+                .padding(.top, 8)
+            } label: {
+                Text("还没有 Key？查看申请步骤")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color(red: 0.8, green: 0.36, blue: 0.14))
             }
+            .tint(Color(red: 0.8, green: 0.36, blue: 0.14))
         }
     }
 
@@ -258,7 +255,7 @@ struct OnboardingView: View {
                 accessibilityPermissionRow
             }
 
-            Text("麦克风决定能不能录音，辅助功能决定能不能直接写回当前光标。不开辅助功能也能继续，但会使用剪贴板回退。")
+            Text("不开辅助功能也能继续，但会使用剪贴板回退。")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
@@ -313,9 +310,9 @@ struct OnboardingView: View {
                     .foregroundStyle(.secondary)
             }
 
-            overviewCard(
+            teachingHint(
                 title: "顺手试一下翻译",
-                body: "按住 Fn + Control，可以直接输出翻译结果。它不是首次引导的必经步骤，但适合在第一次成功输入后顺手试一下。"
+                body: "按住 Fn + Control，可以直接输出翻译结果。"
             )
 
             HStack(spacing: 12) {
@@ -426,12 +423,29 @@ struct OnboardingView: View {
         .background(tint.opacity(0.1), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
-    private func overviewCard(title: String, body: String) -> some View {
-        card {
-            VStack(alignment: .leading, spacing: 8) {
+    private func teachingHint(title: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+            Text(body)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .padding(14)
+        .background(Color.white.opacity(0.46), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func welcomeBullet(title: String, copy: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Circle()
+                .fill(Color(red: 0.8, green: 0.36, blue: 0.14))
+                .frame(width: 8, height: 8)
+                .padding(.top, 7)
+
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
-                Text(body)
+                Text(copy)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

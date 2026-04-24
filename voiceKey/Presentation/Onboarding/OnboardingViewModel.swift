@@ -24,13 +24,13 @@ enum OnboardingStep: Int, CaseIterable {
     var subtitle: String {
         switch self {
         case .welcome:
-            return "先建立预期，不讲细节。"
+            return "先把第一次输入跑通。"
         case .apiKey:
-            return "申请和连接放在同一步里分流。"
+            return "输入后继续，不需要先研究设置。"
         case .permissions:
-            return "麦克风和辅助功能一起处理。"
+            return "把录音和写回要用到的权限准备好。"
         case .directWrite:
-            return "第一次测试就验证能不能落到光标。"
+            return "直接确认文字能不能落到当前输入框。"
         }
     }
 
@@ -48,15 +48,9 @@ enum OnboardingStep: Int, CaseIterable {
     }
 }
 
-enum OnboardingAPIKeyMode {
-    case needKey
-    case haveKey
-}
-
 @MainActor
 final class OnboardingViewModel: ObservableObject {
     @Published var currentStep: OnboardingStep = .welcome
-    @Published var apiKeyMode: OnboardingAPIKeyMode = .needKey
     @Published var apiKeyInput: String = ""
     @Published private(set) var permissionStatus = SystemPermissionStatus(
         inputMonitoring: .notRequired,
@@ -113,16 +107,6 @@ final class OnboardingViewModel: ObservableObject {
 
     func continueFromWelcome() {
         currentStep = .apiKey
-    }
-
-    func chooseHaveKey() {
-        apiKeyMode = .haveKey
-        guideMessage = "已切到“我已经有 Key”路径。"
-    }
-
-    func chooseNeedKey() {
-        apiKeyMode = .needKey
-        guideMessage = "已切到“我还没有 Key”路径。"
     }
 
     func useAPIKeyForCurrentSession() {
@@ -189,11 +173,6 @@ final class OnboardingViewModel: ObservableObject {
 
     func openFreeQuotaDocs() {
         openExternalURL("https://help.aliyun.com/zh/model-studio/new-free-quota", successMessage: "已打开免费额度说明。")
-    }
-
-    func markKeyObtained() {
-        apiKeyMode = .haveKey
-        guideMessage = "已切回输入路径。现在可以粘贴你的百炼 API Key。"
     }
 
     func requestMicrophone() {
@@ -266,7 +245,6 @@ final class OnboardingViewModel: ObservableObject {
             apiKeyInput = environmentValue
             apiKeyAvailability = .environmentProvided
             apiKeyStatusText = "当前由环境变量提供 API Key。"
-            apiKeyMode = .haveKey
             return
         }
 
@@ -276,7 +254,6 @@ final class OnboardingViewModel: ObservableObject {
                 apiKeyInput = sessionValue
                 apiKeyAvailability = .sessionLoaded
                 apiKeyStatusText = "当前会话已加载 API Key。"
-                apiKeyMode = .haveKey
                 return
             }
         } catch {
@@ -286,7 +263,6 @@ final class OnboardingViewModel: ObservableObject {
         if persistentAPIKeyStore.hasStoredKey() {
             apiKeyAvailability = .persistedButNotLoaded
             apiKeyStatusText = "本机安全存储中已保存 API Key，当前会话未加载。"
-            apiKeyMode = .haveKey
             return
         }
 
